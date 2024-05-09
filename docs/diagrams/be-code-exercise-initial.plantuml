@@ -1,0 +1,49 @@
+@@startuml BE-exercise-architecture
+top to bottom direction
+' left to right direction 
+
+skinparam {
+    ' Nodesep 5
+    ' Ranksep 5
+    Linetype ortho
+    layout GEM 
+}
+
+cloud {
+    component "API Client" as [Client]
+}
+
+package "BE Code Exercise" as [App] {
+    component "API Routes\n/api/..." as [API]
+    component "Controllers" as [Contr]
+    component "Json Views" as [View]
+    component "Ecto Models" as [Model]
+}
+
+package "DB" {
+    database "PostgreSQL" {
+        [Currencies]
+        [Countries]
+    }
+}
+'API & clients
+[Client] --> [API]
+[View] --> [Client]
+
+' APP
+[API] --> [Contr]
+[Contr] <--> [Model]
+[Contr] -u-> [View]
+
+'APP to DB
+[Model] <--> [PostgreSQL]
+
+'hidden arrows for layout
+[App] -[hidden]d-> [DB]
+[Client] -[hidden]d-> [App]
+
+' DB relationships
+[Currencies] -r-> [Countries] : "one to many"
+
+
+@@enduml

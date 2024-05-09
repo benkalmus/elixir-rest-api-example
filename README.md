@@ -107,4 +107,4 @@ Now you can visit [`localhost:4000/api/currencies`](http://localhost:4000/api/cu
 
 ## Implementation details
 
-This section is for you to fill in with any decisions you made that may be relevant. You can also change this README to fit your needs.
+See [here](docs/README.md).
