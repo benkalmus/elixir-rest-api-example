@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16.2-alpine
+    container_name: be-exercise-postgres-dev
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: exercise
+    volumes:
+      - ./../db/data:/var/lib/postgresql/data
+      - ./../db/log:/var/log/postgresql
+    ports:
+      - "127.0.0.1:5432:5432"
