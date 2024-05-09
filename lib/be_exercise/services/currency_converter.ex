@@ -5,9 +5,25 @@ defmodule Exercise.Services.CurrencyConverter do
   Note: The current implementation will not contact any external service
   and will use fixed conversion rates that will most likely not be the correct ones.
   """
+  @type currency() :: String.t()
 
+  @doc """
+  Converts a currency by `amount` given three-letter currency code `from` and `to`.
+  Returns an :ok and converted currency in float type, else an :error tuple when currency is not supported.
+
+  ## Examples
+    iex> CurrencyConverter.convert("USD", "EUR", 1.0)
+    {:ok, 0.8442}
+  """
+  @spec convert(currency(), currency(), float()) :: {:ok, float()} | {:error, String.t()}
   def convert(from, to, amount) do
-    rates()["#{to}#{from}"] * amount
+    case rates()[from <> to] do
+      nil ->
+        {:error, "unsupported currencies conversion"}
+      val ->
+        result = val * amount
+        {:ok, result}
+    end
   end
 
   defp rates do
