@@ -28,7 +28,19 @@ It follows the architecture of a standard, generated phoenix project.
 
 - [] Environment file: move credentials out of configs and into .env files
 
-- [] Separate seeding functionality for maintainability of seeds.exs
+- [] Schemas
+  - inspect Country - Currency relationship schema
+    - Country belongs_to currencies
+    - Currency has_many countries
+  - Index fields
+    - specific fields only. Faster WHERE queries. 
+    - currency code unique
+    - country code unique
+
+- [] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
+  - [] Separate seeding functionality for maintainability of seeds.exs
+
+- [] Improve application logging 
 
 - [] **Testing**
   - [] expand current solution test coverage
@@ -60,6 +72,21 @@ It follows the architecture of a standard, generated phoenix project.
   - Country (one to many) Employee
   - What data type should I use to store salaries. Consider deps: https://hexdocs.pm/money/readme.html#full-list
   - What options are there to optimise queries on fetching employees given country, or title.
+  - Most importantly, what currency should I store the salary field as?
+    * 1) Currency local to the Employee's country
+      - Convert currency on READ. 
+      - **Pros**:
+        - Logical solution: currency is already stored in the Currency table by association.
+        - No need to convert salary back into Employee's local currency, which can change based on the conversion rate. 
+      - **Cons**: 
+        - Must convert salary to a common currency on metrics endpoint, which will slow down aggregates. 
+    * 2) Common currency, such as USD for all Employees.
+      - **Pros**: 
+        - Simpler and faster aggregates (min, max, avg and other future) calculations
+      - **Cons**: 
+        - Must convert employee salaries on every WRITE. 
+        - Potential Inconsistency: e.g. If two employees are being hired at the same salary but the currency conversion rate changes in between DB WRITEs, then one employee will be paid slightly less while the other slightly more! This can be resolved by storing historical currency changes but increases complexity. 
+    * **Decision**: The answer depends entirely on the purpose of this application. If performance of the metrics endpoint is the ultimate concern then converting salaries on writes will be more suitable, especially if this application will reach an external Currency conversion service in the future. However this comes at a cost, as mentioned above, and so for data accuracy and consistency reasons I decide to store Employee Salaries in their local currency. 
 
 - **Metrics endpoints**:
   - per_country_salary(country) -> {currency_code_, average, min, max}
@@ -80,9 +107,6 @@ It follows the architecture of a standard, generated phoenix project.
         - postgresql notify 
 
 
-- Add logic to seed 10,000 employees into the DB. They key will be to make it fast
-
-
 ## Future considerations
 - **Distributed sys**: 
   - Reasons to make a distributed application:
@@ -100,4 +124,5 @@ It follows the architecture of a standard, generated phoenix project.
 
 - Cache layer for reads
 
-- CRQ pattern 
+- CQRS pattern: separate read and write operations
+
