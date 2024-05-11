@@ -16,8 +16,20 @@ defmodule Exercise.Services.CurrencyConverterTest do
     test "when one of the currencies is unsupported we get an error tuple as a result" do
       amount = 100
 
-      assert {:error, "unsupported currencies conversion"} =
+      assert {:error, :unsupported_currency} =
                Converter.convert("XYZ", "GBP", amount)
+      assert {:error, :unsupported_currency} =
+        Converter.convert("GBP", "XYZ", amount)
+    end
+
+    test "converting 0 returns 0" do
+      assert {:ok, 0.0} = Converter.convert("GBP", "JPY", 0)
+      assert {:ok, 0.0} = Converter.convert("GBP", "JPY", 0.0)
+    end
+
+    test "return error on negative amount" do
+      amount = -10.0
+      assert {:error, :negative_amount_given} = Converter.convert("GBP", "JPY", amount)
     end
   end
 end

@@ -15,11 +15,19 @@ defmodule Exercise.Services.CurrencyConverter do
     iex> CurrencyConverter.convert("USD", "EUR", 1.0)
     {:ok, 0.8442}
   """
-  @spec convert(currency(), currency(), float()) :: {:ok, float()} | {:error, String.t()}
-  def convert(from, to, amount) do
+  @spec convert(currency(), currency(), number()) ::
+    {:ok, float()} |
+    {:error, :unsupported_currency | :negative_amount_given}
+  def convert(_from, _to, amount) when amount == 0 do
+    {:ok, 0.0}
+  end
+  def convert(_from, _to, amount) when amount < 0 do
+    {:error, :negative_amount_given}
+  end
+  def convert(from, to, amount) when amount > 0 do
     case rates()[from <> to] do
       nil ->
-        {:error, "unsupported currencies conversion"}
+        {:error, :unsupported_currency}
       val ->
         result = val * amount
         {:ok, result}
