@@ -86,7 +86,15 @@ defmodule Exercise.CountriesTest do
       assert {:error, %Ecto.Changeset{}}  = Countries.update_currency(currency, %{@valid_attrs | :code => "invalid code"})
     end
 
-    # test currency get by code
+    test "get_currency_by_code!/1 returns the currency with given code" do
+      currency = currency_fixture()
+      assert Countries.get_currency_by_code!(currency.code) == currency
+    end
+
+    test "get_currency_by_code!/1 returns error when currency.code not found" do
+      currency = currency_fixture()
+      assert_raise Ecto.NoResultsError, fn ->  Countries.get_currency_by_code!("000") end
+    end
 
   end
 
