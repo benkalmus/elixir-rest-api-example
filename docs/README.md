@@ -65,6 +65,9 @@ It follows the architecture of a standard, generated phoenix project.
 
 ## Exploring optimizations and Design decisions
 
+- Some functions raise exceptions while others do not, such as get_currency! and create_currency(). 
+  - [] refactor API so that functions use one or the other. Raising exceptions stacktrace overhead
+
 - batched inserts 
   - should help seed database quickly
 
@@ -125,4 +128,6 @@ It follows the architecture of a standard, generated phoenix project.
 - Cache layer for reads
 
 - CQRS pattern: separate read and write operations
+
+- Numeric codes? 
 

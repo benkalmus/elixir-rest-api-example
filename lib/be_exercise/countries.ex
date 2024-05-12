@@ -125,6 +125,8 @@ defmodule Exercise.Countries do
     Currency.changeset(currency, attrs)
   end
 
+  ## ============================================================
+  ## Country
   alias Exercise.Countries.Country
 
   @doc """

@@ -26,9 +26,19 @@ defmodule ExerciseWeb.CurrencyControllerTest do
   end
 
   describe "index" do
-    test "lists all currencies", %{conn: conn} do
+    test "lists empty currencies", %{conn: conn} do
       conn = get(conn, Routes.currency_path(conn, :index))
       assert json_response(conn, 200)["data"] == []
+    end
+
+    test "lists all currencies", %{conn: conn} do
+      %{currency: currency} = create_currency([])
+      conn = get(conn, Routes.currency_path(conn, :index))
+      assert [%{
+        "id" => currency.id,
+        "code" => currency.code,
+        "name" => currency.name,
+        "symbol" => currency.symbol}] == json_response(conn, 200)["data"]
     end
   end
 
@@ -51,6 +61,38 @@ defmodule ExerciseWeb.CurrencyControllerTest do
       conn = post(conn, Routes.currency_path(conn, :create), currency: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}
     end
+  end
+
+  describe "show currency" do
+    setup [:create_currency]
+
+    test "renders currency when id is valid", %{conn: conn, currency: %Currency{} = currency} do
+      conn = get(conn, Routes.currency_path(conn, :show, currency.id))
+      assert %{
+        "id" => currency.id,
+        "code" => currency.code,
+        "name" => currency.name,
+        "symbol" => currency.symbol
+      } == json_response(conn, 200)["data"]
+    end
+
+    test "renders currency when code is valid", %{conn: conn, currency: %Currency{} = currency} do
+      conn = get(conn, Routes.currency_path(conn, :get_by_code, currency.code))
+      assert %{
+        "id" => currency.id,
+        "code" => currency.code,
+        "name" => currency.name,
+        "symbol" => currency.symbol
+      } == json_response(conn, 200)["data"]
+    end
+
+    test "renders errors when id and code are invalid", %{conn: conn} do
+      conn = get(conn, Routes.currency_path(conn, :show, -1))
+      assert json_response(conn, 404)["errors"] != %{}
+      conn = get(conn, Routes.currency_path(conn, :get_by_code, "test"))
+      assert json_response(conn, 404)["errors"] != %{}
+    end
+
   end
 
   describe "update currency" do

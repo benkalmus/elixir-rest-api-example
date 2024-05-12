@@ -92,7 +92,7 @@ defmodule Exercise.CountriesTest do
     end
 
     test "get_currency_by_code!/1 returns error when currency.code not found" do
-      currency = currency_fixture()
+      currency_fixture()
       assert_raise Ecto.NoResultsError, fn ->  Countries.get_currency_by_code!("000") end
     end
 
