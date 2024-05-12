@@ -3,7 +3,7 @@ defmodule Exercise.Repo.Migrations.CreateCurrencies do
 
   def change do
     create table(:currencies) do
-      add :code, :string
+      add :code, :string, size: 3
       add :name, :string
       add :symbol, :string
 

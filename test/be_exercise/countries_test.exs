@@ -6,13 +6,21 @@ defmodule Exercise.CountriesTest do
   describe "currencies" do
     alias Exercise.Countries.Currency
 
-    @valid_attrs %{code: "some code", name: "some name", symbol: "some symbol"}
+    @valid_attrs %{
+      code: "ABC",
+      name: "some name",
+      symbol: "some symbol"
+    }
     @update_attrs %{
-      code: "some updated code",
+      code: "XYZ",
       name: "some updated name",
       symbol: "some updated symbol"
     }
-    @invalid_attrs %{code: nil, name: nil, symbol: nil}
+    @invalid_attrs %{
+      code: nil,
+      name: nil,
+      symbol: nil
+    }
 
     def currency_fixture(attrs \\ %{}) do
       {:ok, currency} =
@@ -35,9 +43,9 @@ defmodule Exercise.CountriesTest do
 
     test "create_currency/1 with valid data creates a currency" do
       assert {:ok, %Currency{} = currency} = Countries.create_currency(@valid_attrs)
-      assert currency.code == "some code"
-      assert currency.name == "some name"
-      assert currency.symbol == "some symbol"
+      assert currency.code == @valid_attrs.code
+      assert currency.name == @valid_attrs.name
+      assert currency.symbol == @valid_attrs.symbol
     end
 
     test "create_currency/1 with invalid data returns error changeset" do
@@ -47,9 +55,9 @@ defmodule Exercise.CountriesTest do
     test "update_currency/2 with valid data updates the currency" do
       currency = currency_fixture()
       assert {:ok, %Currency{} = currency} = Countries.update_currency(currency, @update_attrs)
-      assert currency.code == "some updated code"
-      assert currency.name == "some updated name"
-      assert currency.symbol == "some updated symbol"
+      assert currency.code == @update_attrs.code
+      assert currency.name == @update_attrs.name
+      assert currency.symbol == @update_attrs.symbol
     end
 
     test "update_currency/2 with invalid data returns error changeset" do
@@ -68,8 +76,21 @@ defmodule Exercise.CountriesTest do
       currency = currency_fixture()
       assert %Ecto.Changeset{} = Countries.change_currency(currency)
     end
+
+    test "create_currency/1 with non ISO 4127 currency.code returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Countries.create_currency(%{@valid_attrs | :code => "invalid code"})
+    end
+
+    test "update_currency/2 with non ISO 4127 currency.code returns error changeset" do
+      currency = currency_fixture()
+      assert {:error, %Ecto.Changeset{}}  = Countries.update_currency(currency, %{@valid_attrs | :code => "invalid code"})
+    end
+
+    # test currency get by code
+
   end
 
+  # ============================================================
   describe "countries" do
     alias Exercise.Countries.Country
 
@@ -129,5 +150,13 @@ defmodule Exercise.CountriesTest do
       country = country_fixture()
       assert %Ecto.Changeset{} = Countries.change_country(country)
     end
+
+    # test "country code must comply with country code alpha-3"
+    # test "cannot insert country without valid currency"
+    # test "cannot update country's currency once set"
+      # would require all employee salaries to be converted. countries don't change their currencies. In such rare scenario, DB should be carefully updated using an external service rather than letting this happen via API.
+    # test "removing currency affects countries referencing the currency"
+      # how do I handle this?
+
   end
 end
