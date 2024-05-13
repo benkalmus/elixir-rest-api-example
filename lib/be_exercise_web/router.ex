@@ -10,6 +10,7 @@ defmodule ExerciseWeb.Router do
 
     resources "/currencies", CurrencyController
     resources "/countries", CountryController
+    resources "/employees", EmployeeController
     get "/currencies/code/:code", CurrencyController, :get_by_code
   end
 

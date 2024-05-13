@@ -37,6 +37,11 @@ It follows the architecture of a standard, generated phoenix project.
     - [x] currency code unique
     - [x] country code unique
 
+- [x] Employee context
+  - [x] Used phoenix generator
+    - `mix phx.gen.json Employees Employee employees full_name:string job_title:string salary:integer country:references:countries`
+  - add country_id foreign key 
+
 - [] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
   - [] Separate seeding functionality for maintainability of seeds.exs
 
