@@ -9,7 +9,7 @@ It follows the architecture of a standard, generated phoenix project.
 `Currencies` and `Countries` are related via a one-to-many relationship. 
 
 ## Reqs
-- Fix existing bugs in the application
+- [x] Fix existing bugs in the application
 - Create an employee resource
 - Seed script
 - Salary metrics endpoint
@@ -30,12 +30,12 @@ It follows the architecture of a standard, generated phoenix project.
 
 - [] Schemas
   - inspect Country - Currency relationship schema
-    - Country belongs_to currencies
-    - Currency has_many countries
+    - [x] Country belongs_to currencies
+    - [x] Currency has_many countries
   - Index fields
     - specific fields only. Faster WHERE queries. 
     - [x] currency code unique
-    - country code unique
+    - [x] country code unique
 
 - [] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
   - [] Separate seeding functionality for maintainability of seeds.exs
@@ -45,8 +45,13 @@ It follows the architecture of a standard, generated phoenix project.
 - [] **Testing**
   - [] expand current solution test coverage
     - [x] Currency
-    - [] Country
+    - [x] Country
+    - [x] Added Data integrity tests to ensure countries and currencies cannot be added twice. 
+    - [x] Ensured that records cannot be orphaned when a currency is associated to countries. 
+    - [] Ensured that foreign key refence cannot be udpated as this will impact meaning of salary field in employee table. 
     - [] Employee
+      - preload
+      - query
   - [] 
 
 - [] **Metrics** endpoints
@@ -68,12 +73,14 @@ It follows the architecture of a standard, generated phoenix project.
 ## Exploring optimizations and Design decisions
 
 - Some functions raise exceptions while others do not, such as get_currency! and create_currency(). 
-  - [] refactor API so that functions use one or the other. Raising exceptions stacktrace overhead
+  - refactor API so that functions use one or the other. Raising exceptions stacktrace overhead
+    - exceptions in get! is idiomatic elixir. 
 
-- Resolving deletes on rows with foreign key references, such as deleting a Currency with a Country reference. 
+- [x] Resolving deletes on rows with foreign key references, such as deleting a Currency with a Country reference. 
   Options:
   - allow delete: dangling rows with no foreign key reference will need to be handled in application
   - safe delete: only if all children of parent have been removed and no FK references exist. 
+  - Decided to go with :restrict option :on_delete. This will prevent orphaning records. 
 
 - batched inserts 
   - should help seed database quickly
@@ -138,5 +145,5 @@ It follows the architecture of a standard, generated phoenix project.
 
 - CQRS pattern: separate read and write operations
 
-- Numeric codes? 
+- Numeric country and currency codes? 
 
