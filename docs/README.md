@@ -76,6 +76,7 @@ It follows the architecture of a standard, generated phoenix project.
 - [] **Documentation**. Ensure @spec and doc comments are provided on all API (with examples where relevant)
   - [x] Generate initial app diagram
   - [] Diagrams: generate sequence diagrams for API
+  - [] seed.exs script usage
 
 ## Exploring optimizations and Design decisions
 

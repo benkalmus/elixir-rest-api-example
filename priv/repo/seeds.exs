@@ -18,7 +18,7 @@ defmodule Exercise.Seed do
   Elixir script to seed the database
   """
   alias Exercise.Countries
-  # alias Exercise.Employees
+  alias Exercise.Employees
 
   @insert_employees true
   @insert_countries true
@@ -110,12 +110,12 @@ defmodule Exercise.Seed do
     country_ids = Countries.list_countries() |> Enum.map(fn c -> c.id end)
 
     employee_records = Enum.map(1..num_employees, fn _ -> Exercise.Seed.generate_employee(first_names, last_names, job_titles, country_ids) end)
-
-    employee_records
-      |> Enum.take_random(10)
-      |> Enum.map(fn e ->
+    # print out first 5 employees
+    employee_records |> Enum.take(5) |> Enum.map(fn e ->
         IO.puts("INSERT:\n#{inspect(e)}\n")
       end)
+    insert_employees(employee_records)
+
   end
   def generate_employees(_) do
     {:ok, :skipped}
@@ -137,17 +137,18 @@ defmodule Exercise.Seed do
     }
   end
 
+  def insert_employees(employees) do
+    employees |> Enum.each(&Employees.create_employee/1)
+  end
+
   #Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000
   defp gen_salary() do
     (5 * :rand.uniform(30)) * 1_000
   end
 
   def run(opts) do
-    with {:ok, _} <- generate_countries(opts),
-      {:ok, _} <- generate_employees(opts)
-    do
-      :ok
-    end
+    generate_countries(opts)
+    generate_employees(opts)
   end
 
   defp parse_args(args) do
