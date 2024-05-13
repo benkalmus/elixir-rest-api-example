@@ -14,7 +14,8 @@ defmodule Exercise.Countries.Country do
   def changeset(country, attrs) do
     country
     |> cast(attrs, [:name, :code, :currency_id])
-    |> validate_required([:name, :code])
+    |> validate_required([:name, :code, :currency_id])
+    |> foreign_key_constraint(:currency_id)
     |> validate_length(:code, max: 3)
     |> unique_constraint(:name)
     |> unique_constraint(:code)

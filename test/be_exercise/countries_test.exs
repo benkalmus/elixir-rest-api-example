@@ -96,6 +96,19 @@ defmodule Exercise.CountriesTest do
       assert_raise Ecto.NoResultsError, fn ->  Countries.get_currency_by_code!("000") end
     end
 
+    test "create_currency/1 with existing currency returns error changeset" do
+      currency_fixture()  #create currency with @valid_attrs
+      assert [@valid_attrs] = Countries.list_currencies()
+      #expecting another fixture to fail with the same @valid_attrs
+      assert {:error, %Ecto.Changeset{}} = Countries.create_currency(@valid_attrs)
+    end
+
+    test "update_currency/1 to an existing currency returns error changeset" do
+      _first_currency = currency_fixture(@valid_attrs)
+      currency = currency_fixture(%{@valid_attrs | code: "XYZ", name: "name"})  #create another currency with different name and code
+      #updating currency to existing code and name (_first_currency)
+      assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @valid_attrs)
+    end
   end
 
   # ============================================================
@@ -107,9 +120,12 @@ defmodule Exercise.CountriesTest do
     @invalid_attrs %{code: nil, name: nil}
 
     def country_fixture(attrs \\ %{}) do
+      # country must have a valid currency association
+      currency = create_currency()
       {:ok, country} =
         attrs
         |> Enum.into(@valid_attrs)
+        |> Enum.into(%{currency_id: currency.id})
         |> Countries.create_country()
 
       country
@@ -126,13 +142,15 @@ defmodule Exercise.CountriesTest do
     end
 
     test "create_country/1 with valid data creates a country" do
-      assert {:ok, %Country{} = country} = Countries.create_country(@valid_attrs)
+      attrs = create_country_attributes(@valid_attrs)
+      assert {:ok, %Country{} = country} = Countries.create_country(attrs)
       assert country.code == @valid_attrs.code
       assert country.name == @valid_attrs.name
     end
 
     test "create_country/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Countries.create_country(@invalid_attrs)
+      attrs = create_country_attributes(@invalid_attrs)
+      assert {:error, %Ecto.Changeset{}} = Countries.create_country(attrs)
     end
 
     test "update_country/2 with valid data updates the country" do
@@ -168,11 +186,25 @@ defmodule Exercise.CountriesTest do
       assert {:error, %Ecto.Changeset{}}  = Countries.update_country(country, %{@valid_attrs | :code => "invalid code"})
     end
 
+    test "create_country/1 with a non-existing currency returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Countries.create_country(Map.put(@valid_attrs, :currency_id, -1))
+    end
     # test "cannot insert country without valid currency" do
     # test "cannot update country's currency once set"
       # would require all employee salaries to be converted. countries don't change their currencies. In such rare scenario, DB should be carefully updated using an external service rather than letting this happen via API.
     # test "removing currency affects countries referencing the currency"
       # how do I handle this?
 
+    # ============================================================
+    # Setup Functions
+    defp create_currency() do
+      {:ok, currency} = Countries.create_currency(%{code: "ABC", name: "some name", symbol: "&"})
+      currency
+    end
+
+    defp create_country_attributes(attrs) do
+      currency = create_currency()
+      Map.put(attrs, :currency_id, currency.id)
+    end
   end
 end

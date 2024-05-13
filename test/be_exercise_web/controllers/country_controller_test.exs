@@ -13,14 +13,15 @@ defmodule ExerciseWeb.CountryControllerTest do
     name: "some updated name"
   }
   @invalid_attrs %{code: nil, name: nil}
-
-  def fixture(:country) do
-    {:ok, country} = Countries.create_country(@create_attrs)
-    country
-  end
+  @valid_currency_attrs %{
+    code: "ABC",
+    name: "some name",
+    symbol: "some symbol"
+  }
 
   setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+    {:ok, currency} = Countries.create_currency(@valid_currency_attrs)
+    {:ok, conn: put_req_header(conn, "accept", "application/json"), currency: currency}
   end
 
   describe "index" do
@@ -31,8 +32,9 @@ defmodule ExerciseWeb.CountryControllerTest do
   end
 
   describe "create country" do
-    test "renders country when data is valid", %{conn: conn} do
-      conn = post(conn, Routes.country_path(conn, :create), country: @create_attrs)
+    test "renders country when data is valid", %{conn: conn, currency: currency} do
+      attrs = @create_attrs |> Map.put(:currency_id, currency.id)
+      conn = post(conn, Routes.country_path(conn, :create), country: attrs)
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get(conn, Routes.country_path(conn, :show, id))
@@ -85,8 +87,9 @@ defmodule ExerciseWeb.CountryControllerTest do
     end
   end
 
-  defp create_country(_) do
-    country = fixture(:country)
-    %{country: country}
+  defp create_country(ctx) do
+    {:ok, country} = Countries.create_country(@create_attrs |> Map.put(:currency_id, ctx.currency.id))
+    # country = fixture(:country)
+    ctx |> Map.put(:country, country)
   end
 end
