@@ -31,12 +31,18 @@ db-setup: db-up
 	mix ecto.migrate
 	make docker-stop 
 
+# Creates DB, migrates and runs seed script
+.PHONY: db-seed
+db-seed: db-up
+	mix seed
+	make docker-stop 
+
 # Removes everything in DB, then creates it, runs migrations and runs seed script
 .PHONY: db-reset
 db-reset: db-up
 	@read -p "Are you sure you want to recreate DB? [y/n]" response;\
 	if [ "$$response" = "y" ]; then\
-		mix ecto.reset;\
+		mix reset;\
 	fi
 	make docker-stop 
 

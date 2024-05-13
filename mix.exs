@@ -57,8 +57,8 @@ defmodule Exercise.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup"],
-      "ecto.setup.dev": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      seed: ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      reset: ["ecto.drop", "seed"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
   end
