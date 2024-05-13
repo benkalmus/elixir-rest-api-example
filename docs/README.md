@@ -10,7 +10,7 @@ It follows the architecture of a standard, generated phoenix project.
 
 ## Reqs
 - [x] Fix existing bugs in the application
-- Create an employee resource
+- [x] Create an employee resource
 - Seed script
 - Salary metrics endpoint
 
@@ -28,10 +28,11 @@ It follows the architecture of a standard, generated phoenix project.
 
 - [] Environment file: move credentials out of configs and into .env files
 
-- [] Schemas
+- [x] Schemas
   - inspect Country - Currency relationship schema
     - [x] Country belongs_to currencies
     - [x] Currency has_many countries
+    - [x] Country has_many Employees. Employee belongs_to Country
   - Index fields
     - specific fields only. Faster WHERE queries. 
     - [x] currency code unique
@@ -40,10 +41,11 @@ It follows the architecture of a standard, generated phoenix project.
 - [x] Employee context
   - [x] Used phoenix generator
     - `mix phx.gen.json Employees Employee employees full_name:string job_title:string salary:integer country:references:countries`
-  - add country_id foreign key 
+  - [x] add country_id foreign key 
 
 - [] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
-  - [] Separate seeding functionality for maintainability of seeds.exs
+  - [x] Separate seeding functionality for maintainability of seeds.exs
+  - Potential improvement: generate_employee/4 can be ran concurrently. May help when seeding millions of records
 
 - [] Improve application logging 
 
@@ -53,8 +55,8 @@ It follows the architecture of a standard, generated phoenix project.
     - [x] Country
     - [x] Added Data integrity tests to ensure countries and currencies cannot be added twice. 
     - [x] Ensured that records cannot be orphaned when a currency is associated to countries. 
-    - [] Ensured that foreign key refence cannot be udpated as this will impact meaning of salary field in employee table. 
-    - [] Employee
+    - [] Ensured that currency foreign key reference cannot be udpated as this will impact meaning of salary field in employee table. 
+    - [x] Employee
       - preload
       - query
   - [] 
