@@ -33,11 +33,14 @@ defmodule ExerciseWeb.CountryControllerTest do
     test "lists all countries", %{conn: conn} = ctx do
       %{:country => country} = create_country(ctx)
       conn = get(conn, Routes.country_path(conn, :index))
-      assert [%{
-               "id" => country.id,
-               "code" => country.code,
-               "name" => country.name
-             }] == json_response(conn, 200)["data"]
+
+      assert [
+               %{
+                 "id" => country.id,
+                 "code" => country.code,
+                 "name" => country.name
+               }
+             ] == json_response(conn, 200)["data"]
     end
   end
 
@@ -59,6 +62,26 @@ defmodule ExerciseWeb.CountryControllerTest do
     test "renders errors when data is invalid", %{conn: conn} do
       conn = post(conn, Routes.country_path(conn, :create), country: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}
+    end
+  end
+
+  describe "show country" do
+    setup [:create_country]
+
+    test "renders country when id is valid", %{conn: conn, country: country} do
+      conn = get(conn, Routes.country_path(conn, :show, country.id))
+
+      assert %{
+               "id" => country.id,
+               "code" => country.code,
+               "name" => country.name
+             } == json_response(conn, 200)["data"]
+    end
+
+    test "renders errors when id or code do not exist", %{conn: conn} do
+      assert_error_sent 404, fn ->
+        get(conn, Routes.country_path(conn, :show, -1))
+      end
     end
   end
 
@@ -98,7 +121,9 @@ defmodule ExerciseWeb.CountryControllerTest do
   end
 
   defp create_country(ctx) do
-    {:ok, country} = Countries.create_country(@create_attrs |> Map.put(:currency_id, ctx.currency.id))
+    {:ok, country} =
+      Countries.create_country(@create_attrs |> Map.put(:currency_id, ctx.currency.id))
+
     # country = fixture(:country)
     ctx |> Map.put(:country, country)
   end
