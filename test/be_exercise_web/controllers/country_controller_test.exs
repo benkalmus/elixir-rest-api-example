@@ -3,6 +3,7 @@ defmodule ExerciseWeb.CountryControllerTest do
 
   alias Exercise.Countries
   alias Exercise.Countries.Country
+  alias Exercise.Fixtures
 
   @create_attrs %{
     code: "ABC",
@@ -20,7 +21,7 @@ defmodule ExerciseWeb.CountryControllerTest do
   }
 
   setup %{conn: conn} do
-    {:ok, currency} = Countries.create_currency(@valid_currency_attrs)
+    currency = Fixtures.currency_fixture(@valid_currency_attrs)
     {:ok, conn: put_req_header(conn, "accept", "application/json"), currency: currency}
   end
 
@@ -124,7 +125,6 @@ defmodule ExerciseWeb.CountryControllerTest do
     {:ok, country} =
       Countries.create_country(@create_attrs |> Map.put(:currency_id, ctx.currency.id))
 
-    # country = fixture(:country)
     ctx |> Map.put(:country, country)
   end
 end

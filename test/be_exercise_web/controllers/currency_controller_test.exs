@@ -1,8 +1,8 @@
 defmodule ExerciseWeb.CurrencyControllerTest do
   use ExerciseWeb.ConnCase
 
-  alias Exercise.Countries
   alias Exercise.Countries.Currency
+  alias Exercise.Fixtures
 
   @create_attrs %{
     code: "ABC",
@@ -15,11 +15,6 @@ defmodule ExerciseWeb.CurrencyControllerTest do
     symbol: "some updated symbol"
   }
   @invalid_attrs %{code: nil, name: nil, symbol: nil}
-
-  def fixture(:currency) do
-    {:ok, currency} = Countries.create_currency(@create_attrs)
-    currency
-  end
 
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
@@ -143,7 +138,7 @@ defmodule ExerciseWeb.CurrencyControllerTest do
   end
 
   defp create_currency(_) do
-    currency = fixture(:currency)
+    currency = Fixtures.currency_fixture()
     %{currency: currency}
   end
 end
