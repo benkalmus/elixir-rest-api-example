@@ -16,5 +16,6 @@ defmodule Exercise.Employees.Employee do
     employee
     |> cast(attrs, [:full_name, :job_title, :salary, :country_id])
     |> validate_required([:full_name, :job_title, :salary, :country_id])
+    |> foreign_key_constraint(:country_id)
   end
 end

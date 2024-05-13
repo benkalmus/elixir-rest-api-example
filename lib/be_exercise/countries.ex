@@ -209,7 +209,9 @@ defmodule Exercise.Countries do
 
   """
   def delete_country(%Country{} = country) do
-    Repo.delete(country)
+    country
+    |> Country.delete_changeset()
+    |> Repo.delete()
   end
 
   @doc """

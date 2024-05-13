@@ -18,6 +18,12 @@ defmodule Exercise.EmployeesTest do
       salary: nil,
       country_id: nil
     }
+    @valid_attrs %{
+      full_name: "some full_name",
+      job_title: "some job_title",
+      salary: 42,
+      country_id: :todo
+    }
 
     test "list_employees/0 returns all employees", %{country: country} do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
@@ -30,16 +36,14 @@ defmodule Exercise.EmployeesTest do
     end
 
     test "create_employee/1 with valid data creates a employee", %{country:  country} do
-      valid_attrs = %{full_name: "some full_name", job_title: "some job_title", salary: 42}
-
-      assert {:ok, %Employee{} = employee} = Employees.create_employee(Map.put(valid_attrs, :country_id, country.id))
+      assert {:ok, %Employee{} = employee} = Employees.create_employee(Map.put(@valid_attrs, :country_id, country.id))
       assert employee.full_name == "some full_name"
       assert employee.job_title == "some job_title"
       assert employee.salary == 42
     end
 
-    test "create_employee/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Employees.create_employee(@invalid_attrs)
+    test "create_employee/1 with invalid data returns error changeset", %{country:  country} do
+      assert {:error, %Ecto.Changeset{}} = Employees.create_employee(Map.put(@invalid_attrs, :country_id, country.id))
     end
 
     test "update_employee/2 with valid data updates the employee", %{country: country} do
@@ -68,6 +72,16 @@ defmodule Exercise.EmployeesTest do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
       assert %Ecto.Changeset{} = Employees.change_employee(employee)
     end
+
+    test "remove country with associated employee should return error changeset", %{country: country} do
+      _employee = Fixtures.employee_fixture(%{country_id: country.id})
+      assert {:error, %Ecto.Changeset{}} = Exercise.Countries.delete_country(country)
+    end
+
+    test "create_employee/1 with a non-existing country returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Employees.create_employee(Map.put(@valid_attrs, :country_id, -1))
+    end
+
   end
 
 end
