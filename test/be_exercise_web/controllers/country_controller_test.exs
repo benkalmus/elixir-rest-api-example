@@ -25,9 +25,19 @@ defmodule ExerciseWeb.CountryControllerTest do
   end
 
   describe "index" do
-    test "lists all countries", %{conn: conn} do
+    test "lists empty countries", %{conn: conn} do
       conn = get(conn, Routes.country_path(conn, :index))
       assert json_response(conn, 200)["data"] == []
+    end
+
+    test "lists all countries", %{conn: conn} = ctx do
+      %{:country => country} = create_country(ctx)
+      conn = get(conn, Routes.country_path(conn, :index))
+      assert [%{
+               "id" => country.id,
+               "code" => country.code,
+               "name" => country.name
+             }] == json_response(conn, 200)["data"]
     end
   end
 
