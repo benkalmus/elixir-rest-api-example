@@ -6,6 +6,7 @@ defmodule Exercise.Countries.Currency do
     field :code, :string
     field :name, :string
     field :symbol, :string
+    has_many :country, Exercise.Countries.Country
 
     timestamps()
   end
@@ -16,7 +17,15 @@ defmodule Exercise.Countries.Currency do
     |> cast(attrs, [:code, :name, :symbol])
     |> validate_required([:code, :name, :symbol])
     |> validate_length(:code, max: 3)
+    |> no_assoc_constraint(:country)
     |> unique_constraint(:name)
     |> unique_constraint(:code)
+  end
+
+  # Checks if currency can be deleted (no associated country)
+  def delete_changeset(currency) do
+    currency
+    |> change()
+    |> no_assoc_constraint(:country, message: "currency is associated with a country")  # Ensures that currency can only be delete if it is not associated with any country
   end
 end

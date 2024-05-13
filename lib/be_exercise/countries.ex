@@ -109,7 +109,9 @@ defmodule Exercise.Countries do
 
   """
   def delete_currency(%Currency{} = currency) do
-    Repo.delete(currency)
+    currency
+    |> Currency.delete_changeset()
+    |> Repo.delete()
   end
 
   @doc """

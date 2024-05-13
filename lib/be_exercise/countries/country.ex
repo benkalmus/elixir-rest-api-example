@@ -5,7 +5,7 @@ defmodule Exercise.Countries.Country do
   schema "countries" do
     field :code, :string
     field :name, :string
-    field :currency_id, :id
+    belongs_to :currency, Exercise.Countries.Currency, foreign_key: :currency_id
 
     timestamps()
   end
