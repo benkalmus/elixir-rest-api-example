@@ -15,6 +15,7 @@ defmodule Exercise.Countries.Country do
     country
     |> cast(attrs, [:name, :code, :currency_id])
     |> validate_required([:name, :code])
+    |> validate_length(:code, max: 3)
     |> unique_constraint(:name)
     |> unique_constraint(:code)
   end

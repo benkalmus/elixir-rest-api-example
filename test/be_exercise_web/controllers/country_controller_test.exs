@@ -5,11 +5,11 @@ defmodule ExerciseWeb.CountryControllerTest do
   alias Exercise.Countries.Country
 
   @create_attrs %{
-    code: "some code",
+    code: "ABC",
     name: "some name"
   }
   @update_attrs %{
-    code: "some updated code",
+    code: "XYZ",
     name: "some updated name"
   }
   @invalid_attrs %{code: nil, name: nil}
@@ -39,7 +39,7 @@ defmodule ExerciseWeb.CountryControllerTest do
 
       assert %{
                "id" => ^id,
-               "code" => "some code",
+               "code" => "ABC",
                "name" => "some name"
              } = json_response(conn, 200)["data"]
     end
@@ -61,7 +61,7 @@ defmodule ExerciseWeb.CountryControllerTest do
 
       assert %{
                "id" => ^id,
-               "code" => "some updated code",
+               "code" => "XYZ",
                "name" => "some updated name"
              } = json_response(conn, 200)["data"]
     end

@@ -102,8 +102,8 @@ defmodule Exercise.CountriesTest do
   describe "countries" do
     alias Exercise.Countries.Country
 
-    @valid_attrs %{code: "some code", name: "some name"}
-    @update_attrs %{code: "some updated code", name: "some updated name"}
+    @valid_attrs %{code: "ABC", name: "some name"}
+    @update_attrs %{code: "XYZ", name: "some updated name"}
     @invalid_attrs %{code: nil, name: nil}
 
     def country_fixture(attrs \\ %{}) do
