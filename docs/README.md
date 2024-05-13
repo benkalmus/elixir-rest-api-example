@@ -53,12 +53,14 @@ It follows the architecture of a standard, generated phoenix project.
   - [] expand current solution test coverage
     - [x] Currency
     - [x] Country
+      - [] preload currency
     - [x] Added Data integrity tests to ensure countries and currencies cannot be added twice. 
     - [x] Ensured that records cannot be orphaned when a currency is associated to countries. 
     - [] Ensured that currency foreign key reference cannot be udpated as this will impact meaning of salary field in employee table. 
     - [x] Employee
-      - preload
-      - query
+      - [x] preload
+        - update view to show currency in which the salary is paid!
+      - [] query
   - [] 
 
 - [] **Metrics** endpoints
@@ -90,8 +92,17 @@ It follows the architecture of a standard, generated phoenix project.
   - safe delete: only if all children of parent have been removed and no FK references exist. 
   - Decided to go with :restrict option :on_delete. This will prevent orphaning records. 
 
-- batched inserts 
-  - should help seed database quickly
+- [] **batched inserts** 
+  - current insert takes too long to seed database with hundreds of thousands of records
+  - add endpoint to batch_write multiple employee records. Options:
+    - Pass in collectable and write multiple employees in one request. 
+      - return success and failure lists, so that client can fix and retry
+    - could expose insert_all for even faster writes, but doesn't perform validation. Should not expose this to web API. 
+    - Parallel pipeline: producer->consumer.
+      - employee records -> spawn worker pool: perform changeset validation -> DB writer: Repo.insert 
+      - Task.async_stream -> insert_all
+
+
 
 - **Employee** table: Consider DB relationship between Employees and Countries. https://hexdocs.pm/ecto/associations.html 
   - Country (one to many) Employee
@@ -155,3 +166,5 @@ It follows the architecture of a standard, generated phoenix project.
 
 - Numeric country and currency codes? 
 
+- Add ease of use API to fetch records via fields such as `name` and `code`. 
+  - An example of this already exists in `get_currency_by_code!/1`

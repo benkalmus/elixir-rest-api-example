@@ -51,7 +51,7 @@ defmodule Exercise.Fixtures do
         })
       |> Employees.create_employee()
 
-    employee
+    employee |> Exercise.Repo.preload(:country)
   end
 
 end

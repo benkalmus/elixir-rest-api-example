@@ -12,6 +12,7 @@ defmodule ExerciseWeb.Router do
     resources "/countries", CountryController
     resources "/employees", EmployeeController
     get "/currencies/code/:code", CurrencyController, :get_by_code
+    post "/employees/batch_write", EmployeeController, :batch_write
   end
 
   # Enables LiveDashboard only for development

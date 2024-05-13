@@ -13,6 +13,7 @@ defmodule ExerciseWeb.EmployeeController do
 
   def create(conn, %{"employee" => employee_params}) do
     with {:ok, %Employee{} = employee} <- Employees.create_employee(employee_params) do
+      employee = employee |> Exercise.Repo.preload(:country)
       conn
       |> put_status(:created)
       |> put_resp_header("location", ~p"/api/employees/#{employee}")
@@ -39,5 +40,10 @@ defmodule ExerciseWeb.EmployeeController do
     with {:ok, %Employee{}} <- Employees.delete_employee(employee) do
       send_resp(conn, :no_content, "")
     end
+  end
+
+  def batch_write(conn, %{"employees" => employee_params} = _params) do
+    {:ok, successful, failed} = Employees.batch_write(employee_params)
+    render(conn, :batch_result, %{successful: successful, failed: failed})
   end
 end

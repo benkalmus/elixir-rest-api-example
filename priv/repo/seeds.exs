@@ -22,9 +22,10 @@ defmodule Exercise.Seed do
 
   @insert_employees true
   @insert_countries true
+  @insert_currencies true
   @job_title_subset_num 100
   @seed {1, 2, 3}
-  @num_employees 10_000
+  @num_employees 10_000 #TODO
 
 
   # Seed the 8 supported currencies
@@ -63,7 +64,8 @@ defmodule Exercise.Seed do
     ["United States", "USA", "USD"]
   ]
 
-  def generate_currencies() do
+  def generate_currencies(%{:countries => true}) do
+    IO.puts("\nInserting currencies\n")
     for currency <- @currency_data do
       [name, code, symbol] = currency
 
@@ -75,8 +77,12 @@ defmodule Exercise.Seed do
         })
     end
   end
+  def generate_currencies(_) do
+    {:ok, :skipped}
+  end
 
   def generate_countries(%{:countries => true}) do
+    IO.puts("\nInserting countries\n")
     for country <- @country_data do
       [name, code, currency_code] = country
       currency = Countries.get_currency_by_code!(currency_code)
@@ -97,6 +103,7 @@ defmodule Exercise.Seed do
   end
 
   def generate_employees(%{:employees => true} = opts) do
+    IO.puts("\nInserting employees\n")
     num_employees = opts[:number]
     IO.puts("Generating #{num_employees} employees\n")
     # read first and last names file
@@ -107,6 +114,7 @@ defmodule Exercise.Seed do
     #take subset of N job_titles
     job_titles = Enum.take_random(job_titles, @job_title_subset_num) |> Enum.map(&String.trim_trailing/1)
 
+    #retrieve all country ids
     country_ids = Countries.list_countries() |> Enum.map(fn c -> c.id end)
 
     employee_records = Enum.map(1..num_employees, fn _ -> Exercise.Seed.generate_employee(first_names, last_names, job_titles, country_ids) end)
@@ -115,7 +123,8 @@ defmodule Exercise.Seed do
         IO.puts("INSERT:\n#{inspect(e)}\n")
       end)
     insert_employees(employee_records)
-
+    num_inserted = length(Employees.list_employees())
+    IO.puts("Inserted #{num_inserted} employees\n")
   end
   def generate_employees(_) do
     {:ok, :skipped}
@@ -138,7 +147,11 @@ defmodule Exercise.Seed do
   end
 
   def insert_employees(employees) do
-    employees |> Enum.each(&Employees.create_employee/1)
+    # split employees into N batches and post them to batch_write
+    batch_size = 10000
+    employees |> Enum.chunk_every(batch_size) |> Enum.each(&Employees.batch_write/1)
+
+    # employees |> Enum.each(&Employees.create_employee/1)
   end
 
   #Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000
@@ -147,6 +160,7 @@ defmodule Exercise.Seed do
   end
 
   def run(opts) do
+    generate_currencies(opts)
     generate_countries(opts)
     generate_employees(opts)
   end
@@ -156,15 +170,17 @@ defmodule Exercise.Seed do
       number: :integer,
       employees: :boolean,
       countries: :boolean,
+      currencies: :boolean,
       help: :boolean
     ]
     defaults = %{
       number: @num_employees,
       employees: @insert_employees,
-      countries: @insert_countries
+      countries: @insert_countries,
+      currencies: @insert_currencies
     }
 
-    {opts, _, _} = OptionParser.parse(args, switches: options, aliases: [h: :help, n: :number, e: :employees, c: :countries])
+    {opts, _, _} = OptionParser.parse(args, switches: options, aliases: [h: :help, n: :number, e: :employees, c: :countries, o: :currencies])
     opts = Enum.into(opts, defaults)
 
     case opts[:help] do
@@ -181,7 +197,8 @@ defmodule Exercise.Seed do
     Options:
       -n, --number      NUMBER  Number of Employee records to generate & insert (default: #{@num_employees})
       -e, --employees   BOOL    If true, employees will be generated and inserted (default: #{@insert_employees})
-      -c, --countries   BOOL    If true, currencies & countries will be inserted (default: #{@insert_countries})
+      -c, --countries   BOOL    If true, countries will be inserted (default: #{@insert_countries})
+      -o, --currencies  BOOL    If true, currencies will be inserted (default: #{@insert_currencies})
       -h, --help                Print this help information
     """
   end

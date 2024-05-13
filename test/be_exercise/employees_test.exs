@@ -82,6 +82,27 @@ defmodule Exercise.EmployeesTest do
       assert {:error, %Ecto.Changeset{}} = Employees.create_employee(Map.put(@valid_attrs, :country_id, -1))
     end
 
-  end
+    test "batch_write/1 with a valid list of employees creates them", %{country: country} do
+      employee_batches =  [
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50_000},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60_000}
+      ]
+      assert {:ok, successful, []} = Employees.batch_write(employee_batches)
 
+      assert length(successful) == length(employee_batches)
+      # ensure employees were written to DB, retrieve and compare them
+      all = Employees.list_employees()
+      #TODO improve this comparison, on error we can't see which element failed
+      assert true = Enum.all?(successful, fn employee ->
+        Enum.any?(all, fn e ->
+          e == employee |> Exercise.Repo.preload(:country)
+        end)
+      end)
+    end
+
+    #todo
+      # valid and invalid lists
+    #
+
+  end
 end

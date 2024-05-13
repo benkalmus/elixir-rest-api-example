@@ -19,6 +19,7 @@ defmodule Exercise.Employees do
   """
   def list_employees do
     Repo.all(Employee)
+    |> Repo.preload(:country)
   end
 
   @doc """
@@ -35,7 +36,12 @@ defmodule Exercise.Employees do
       ** (Ecto.NoResultsError)
 
   """
-  def get_employee!(id), do: Repo.get!(Employee, id)
+  #get employee and preload country
+
+  def get_employee!(id) do
+    Repo.get!(Employee, id)
+    |> Repo.preload(:country)
+  end
 
   @doc """
   Creates a employee.
@@ -100,5 +106,27 @@ defmodule Exercise.Employees do
   """
   def change_employee(%Employee{} = employee, attrs \\ %{}) do
     Employee.changeset(employee, attrs)
+  end
+
+  @doc """
+    Batch writes employees to the database.
+    Returns two lists, successful employee creations and failed changesets.
+
+    {:ok, [%Employee{}], [%Ecto.Changeset{}] }
+  """
+  def batch_write(employee_attrs) do
+    changesets = Enum.map(employee_attrs, &Employee.changeset(%Employee{}, &1))
+    # todo, filter valid? == false changesets
+
+    {successful, failed} =
+      Enum.reduce(changesets, {[], []}, fn changeset, {s_acc, f_acc} ->
+        case Repo.insert(changeset) do
+          {:ok, record} ->
+            {[record | s_acc], f_acc}
+          {:error, c} ->
+            {s_acc, [c | f_acc]}
+        end
+      end)
+    {:ok, successful, failed}
   end
 end

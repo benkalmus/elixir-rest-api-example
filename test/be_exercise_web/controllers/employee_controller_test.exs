@@ -51,6 +51,48 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       conn = post(conn, ~p"/api/employees", employee:  employee_attr(@invalid_attrs, country))
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "batch_write returns lists of successes and failures", %{conn: conn, country: country} do
+      country_id = country.id
+      employee_batches =  [
+        %{full_name: "John Smith", job_title: "Developer", country_id: country_id, salary: 50_000},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: -1, salary: 60_000}
+      ]
+      conn = post(conn, Routes.employee_path(conn, :batch_write), employees: employee_batches)
+      response = json_response(conn, 200)
+      assert [%{
+        "full_name" => "John Smith",
+        "job_title" => "Developer",
+        "salary" => 50_000,
+        "country_id" => ^country_id
+      }] = response["successful"]
+
+      #TODO improve failed verbosity
+      assert [%{"country_id" => ["does not exist"]}] = response["failed"]
+
+    end
+  end
+
+  describe "show employee" do
+    setup [:create_employee]
+
+    test "renders employee when id is valid", %{conn: conn, employee: employee} do
+      conn = get(conn, Routes.employee_path(conn, :show, employee.id))
+
+      assert %{
+               "id" => employee.id,
+               "full_name" => employee.full_name,
+               "salary" => employee.salary,
+               "job_title" => employee.job_title,
+               "country_id" => employee.country.id
+             } == json_response(conn, 200)["data"]
+    end
+
+    test "renders errors when id do not exist", %{conn: conn} do
+      assert_error_sent 404, fn ->
+        get(conn, Routes.employee_path(conn, :show, -1))
+      end
+    end
   end
 
   describe "update employee" do
