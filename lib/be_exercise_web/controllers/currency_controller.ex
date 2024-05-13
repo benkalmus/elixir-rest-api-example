@@ -21,17 +21,17 @@ defmodule ExerciseWeb.CurrencyController do
   end
 
   def show(conn, %{"id" => id}) do
-    #wrap in try catch
     currency = Countries.get_currency!(String.to_integer(id))
     render(conn, "show.json", currency: currency)
-  rescue
-    Ecto.NoResultsError ->
-      conn
-      |> put_status(:not_found)
-      |> put_view(ExerciseWeb.ErrorView)
-      |> render(:"404")
   end
 
+  @doc """
+  Fetch Currency by its three letter code, such as "USD".
+
+  ## Example
+  iex> CurrencyController.get_by_code(conn, %{"code" => "USD"})
+
+  """
   def get_by_code(conn, %{"code" => code}) do
     currency = Countries.get_currency_by_code!(code)
     render(conn, "show.json", currency: currency)

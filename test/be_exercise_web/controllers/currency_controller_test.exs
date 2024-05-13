@@ -86,11 +86,13 @@ defmodule ExerciseWeb.CurrencyControllerTest do
       } == json_response(conn, 200)["data"]
     end
 
-    test "renders errors when id and code are invalid", %{conn: conn} do
-      conn = get(conn, Routes.currency_path(conn, :show, -1))
-      assert json_response(conn, 404)["errors"] != %{}
-      conn = get(conn, Routes.currency_path(conn, :get_by_code, "test"))
-      assert json_response(conn, 404)["errors"] != %{}
+    test "renders errors when id or code do not exist", %{conn: conn} do
+      assert_error_sent 404, fn ->
+        get(conn, Routes.currency_path(conn, :show, -1))
+      end
+      assert_error_sent 404, fn ->
+        get(conn, Routes.currency_path(conn, :get_by_code, "test"))
+      end
     end
 
   end

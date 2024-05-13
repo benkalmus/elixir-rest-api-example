@@ -119,10 +119,12 @@ It follows the architecture of a standard, generated phoenix project.
   - Reasons not to:
     - simple CRUD API, an interface to DB won't benefit from multiple nodes. Read and write limited by DB
     - increased complexity
-      - should break up the app into smaller microservices: 
-        - CRUD API, Metrics workers, Key-Value cache
+      - should break up the app into smaller microservices. Assign hardware to each app's advantage
+        - CRUD API. Lightweight
+        - Metrics workers. Faster/More CPUs
+        - Key-Value caches. Caches should be given more RAM.
 
-  - distributed key-value store as cache instead of ETS (local only)
+  - Distributed key-value store as cache instead of ETS (local only)
   - third party service such as redis, varnish
 
 - Cache layer for reads
