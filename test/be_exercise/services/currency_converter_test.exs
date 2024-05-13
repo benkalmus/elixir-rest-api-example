@@ -18,8 +18,9 @@ defmodule Exercise.Services.CurrencyConverterTest do
 
       assert {:error, :unsupported_currency} =
                Converter.convert("XYZ", "GBP", amount)
+
       assert {:error, :unsupported_currency} =
-        Converter.convert("GBP", "XYZ", amount)
+               Converter.convert("GBP", "XYZ", amount)
     end
 
     test "converting 0 returns 0" do

@@ -78,12 +78,15 @@ defmodule Exercise.CountriesTest do
     end
 
     test "create_currency/1 with non ISO 4127 currency.code returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Countries.create_currency(%{@valid_attrs | :code => "invalid code"})
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.create_currency(%{@valid_attrs | :code => "invalid code"})
     end
 
     test "update_currency/2 with non ISO 4127 currency.code returns error changeset" do
       currency = currency_fixture()
-      assert {:error, %Ecto.Changeset{}}  = Countries.update_currency(currency, %{@valid_attrs | :code => "invalid code"})
+
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.update_currency(currency, %{@valid_attrs | :code => "invalid code"})
     end
 
     test "get_currency_by_code!/1 returns the currency with given code" do
@@ -93,20 +96,22 @@ defmodule Exercise.CountriesTest do
 
     test "get_currency_by_code!/1 returns error when currency.code not found" do
       currency_fixture()
-      assert_raise Ecto.NoResultsError, fn ->  Countries.get_currency_by_code!("000") end
+      assert_raise Ecto.NoResultsError, fn -> Countries.get_currency_by_code!("000") end
     end
 
     test "create_currency/1 with existing currency returns error changeset" do
-      currency_fixture()  #create currency with @valid_attrs
+      # create currency with @valid_attrs
+      currency_fixture()
       assert [@valid_attrs] = Countries.list_currencies()
-      #expecting another fixture to fail with the same @valid_attrs
+      # expecting another fixture to fail with the same @valid_attrs
       assert {:error, %Ecto.Changeset{}} = Countries.create_currency(@valid_attrs)
     end
 
     test "update_currency/1 to an existing currency returns error changeset" do
       _first_currency = currency_fixture(@valid_attrs)
-      currency = currency_fixture(%{@valid_attrs | code: "XYZ", name: "name"})  #create another currency with different name and code
-      #updating currency to existing code and name (_first_currency)
+      # create another currency with different name and code
+      currency = currency_fixture(%{@valid_attrs | code: "XYZ", name: "name"})
+      # updating currency to existing code and name (_first_currency)
       assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @valid_attrs)
     end
   end
@@ -122,6 +127,7 @@ defmodule Exercise.CountriesTest do
     def country_fixture(attrs \\ %{}) do
       # country must have a valid currency association
       currency = create_currency()
+
       {:ok, country} =
         attrs
         |> Enum.into(@valid_attrs)
@@ -178,22 +184,27 @@ defmodule Exercise.CountriesTest do
     end
 
     test "create_country/1 with non alpha-3 country.code returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Countries.create_country(%{@valid_attrs | :code => "invalid code"})
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.create_country(%{@valid_attrs | :code => "invalid code"})
     end
 
     test "update_country/2 with non alpha-3 country.code returns error changeset" do
       country = country_fixture()
-      assert {:error, %Ecto.Changeset{}}  = Countries.update_country(country, %{@valid_attrs | :code => "invalid code"})
+
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.update_country(country, %{@valid_attrs | :code => "invalid code"})
     end
 
     test "create_country/1 with a non-existing currency returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Countries.create_country(Map.put(@valid_attrs, :currency_id, -1))
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.create_country(Map.put(@valid_attrs, :currency_id, -1))
     end
+
     # test "cannot insert country without valid currency" do
     # test "cannot update country's currency once set"
-      # would require all employee salaries to be converted. countries don't change their currencies. In such rare scenario, DB should be carefully updated using an external service rather than letting this happen via API.
+    # would require all employee salaries to be converted. countries don't change their currencies. In such rare scenario, DB should be carefully updated using an external service rather than letting this happen via API.
     # test "removing currency affects countries referencing the currency"
-      # how do I handle this?
+    # how do I handle this?
 
     # ============================================================
     # Setup Functions

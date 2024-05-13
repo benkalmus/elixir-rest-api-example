@@ -53,7 +53,7 @@ defmodule ExerciseWeb do
       import Plug.Conn
       import Phoenix.Controller
 
-      #Defines a "catch all" handler for exceptions raised during routing.
+      # Defines a "catch all" handler for exceptions raised during routing.
       @impl Plug.ErrorHandler
       def handle_errors(conn, %{reason: %{message: message}}) do
         conn |> json(%{errors: message}) |> halt()

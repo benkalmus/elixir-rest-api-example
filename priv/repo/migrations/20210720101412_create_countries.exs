@@ -5,7 +5,7 @@ defmodule Exercise.Repo.Migrations.CreateCountries do
     create table(:countries) do
       add :name, :string
       add :code, :string
-      add :currency_id, references(:currencies, on_delete: :nothing)
+      add :currency_id, references(:currencies, on_delete: :restrict)
 
       timestamps()
     end

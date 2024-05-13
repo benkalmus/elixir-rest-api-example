@@ -10,7 +10,7 @@ defmodule ExerciseWeb.Router do
 
     resources "/currencies", CurrencyController
     resources "/countries", CountryController
-    get "/currencies/code/:code" , CurrencyController, :get_by_code
+    get "/currencies/code/:code", CurrencyController, :get_by_code
   end
 
   # Enables LiveDashboard only for development

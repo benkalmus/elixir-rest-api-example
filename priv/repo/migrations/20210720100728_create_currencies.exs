@@ -9,6 +9,7 @@ defmodule Exercise.Repo.Migrations.CreateCurrencies do
 
       timestamps()
     end
+
     create unique_index(:currencies, [:code])
     create unique_index(:currencies, [:name])
   end

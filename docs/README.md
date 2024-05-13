@@ -34,7 +34,7 @@ It follows the architecture of a standard, generated phoenix project.
     - Currency has_many countries
   - Index fields
     - specific fields only. Faster WHERE queries. 
-    - currency code unique
+    - [x] currency code unique
     - country code unique
 
 - [] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
@@ -69,6 +69,11 @@ It follows the architecture of a standard, generated phoenix project.
 
 - Some functions raise exceptions while others do not, such as get_currency! and create_currency(). 
   - [] refactor API so that functions use one or the other. Raising exceptions stacktrace overhead
+
+- Resolving deletes on rows with foreign key references, such as deleting a Currency with a Country reference. 
+  Options:
+  - allow delete: dangling rows with no foreign key reference will need to be handled in application
+  - safe delete: only if all children of parent have been removed and no FK references exist. 
 
 - batched inserts 
   - should help seed database quickly

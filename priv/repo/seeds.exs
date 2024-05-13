@@ -13,7 +13,6 @@
 # The code below demonstrates initial data insertion for currencies and countries.
 # Please feel free to update the code if you consider it necessary.
 
-
 alias Exercise.Countries
 
 # Seed the 8 supported currencies
@@ -39,11 +38,12 @@ currency_data = [
 for currency <- currency_data do
   [name, code, symbol] = currency
 
-  {:ok, _currency} = Countries.create_currency(%{
-    name: name,
-    code: code,
-    symbol: symbol
-  })
+  {:ok, _currency} =
+    Countries.create_currency(%{
+      name: name,
+      code: code,
+      symbol: symbol
+    })
 end
 
 # Seed the 12 supported countries
@@ -62,14 +62,15 @@ country_data = [
   ["United States", "USA", "USD"]
 ]
 
-currencies_map = Countries.list_currencies() |>
-  Enum.reduce(%{}, fn c, acc -> Map.put(acc, c.code, c.id) end)
+currencies_map =
+  Countries.list_currencies()
+  |> Enum.reduce(%{}, fn c, acc -> Map.put(acc, c.code, c.id) end)
 
-IO.puts("currencies are:\n#{inspect currencies_map}\n")
+IO.puts("currencies are:\n#{inspect(currencies_map)}\n")
 
 for country <- country_data do
   [name, code, currency_code] = country
-  #fetch all currencies, form a hashmap
+  # fetch all currencies, form a hashmap
   currency = Countries.get_currency_by_code!(currency_code)
   # case currencies_map[currency_code] do
   #   nil ->
@@ -77,14 +78,14 @@ for country <- country_data do
   #     IO.puts("#{name}'s currency not found #{currency_code}\n")
   #     :ok
   #   id ->
-    country_map = %{
-      name: name,
-      code: code,
-      currency_id: currency.id
-    }
-    IO.puts("INSERT:\n#{inspect country_map}\n")
-    {:ok, _country} = Countries.create_country(country_map)
+  country_map = %{
+    name: name,
+    code: code,
+    currency_id: currency.id
+  }
+
+  IO.puts("INSERT:\n#{inspect(country_map)}\n")
+  {:ok, _country} = Countries.create_country(country_map)
 
   # end
-
 end

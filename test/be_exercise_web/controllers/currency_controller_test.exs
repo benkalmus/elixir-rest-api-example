@@ -34,11 +34,15 @@ defmodule ExerciseWeb.CurrencyControllerTest do
     test "lists all currencies", %{conn: conn} do
       %{currency: currency} = create_currency([])
       conn = get(conn, Routes.currency_path(conn, :index))
-      assert [%{
-        "id" => currency.id,
-        "code" => currency.code,
-        "name" => currency.name,
-        "symbol" => currency.symbol}] == json_response(conn, 200)["data"]
+
+      assert [
+               %{
+                 "id" => currency.id,
+                 "code" => currency.code,
+                 "name" => currency.name,
+                 "symbol" => currency.symbol
+               }
+             ] == json_response(conn, 200)["data"]
     end
   end
 
@@ -68,33 +72,35 @@ defmodule ExerciseWeb.CurrencyControllerTest do
 
     test "renders currency when id is valid", %{conn: conn, currency: %Currency{} = currency} do
       conn = get(conn, Routes.currency_path(conn, :show, currency.id))
+
       assert %{
-        "id" => currency.id,
-        "code" => currency.code,
-        "name" => currency.name,
-        "symbol" => currency.symbol
-      } == json_response(conn, 200)["data"]
+               "id" => currency.id,
+               "code" => currency.code,
+               "name" => currency.name,
+               "symbol" => currency.symbol
+             } == json_response(conn, 200)["data"]
     end
 
     test "renders currency when code is valid", %{conn: conn, currency: %Currency{} = currency} do
       conn = get(conn, Routes.currency_path(conn, :get_by_code, currency.code))
+
       assert %{
-        "id" => currency.id,
-        "code" => currency.code,
-        "name" => currency.name,
-        "symbol" => currency.symbol
-      } == json_response(conn, 200)["data"]
+               "id" => currency.id,
+               "code" => currency.code,
+               "name" => currency.name,
+               "symbol" => currency.symbol
+             } == json_response(conn, 200)["data"]
     end
 
     test "renders errors when id or code do not exist", %{conn: conn} do
       assert_error_sent 404, fn ->
         get(conn, Routes.currency_path(conn, :show, -1))
       end
+
       assert_error_sent 404, fn ->
         get(conn, Routes.currency_path(conn, :get_by_code, "test"))
       end
     end
-
   end
 
   describe "update currency" do
