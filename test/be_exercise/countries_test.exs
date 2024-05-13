@@ -2,7 +2,7 @@ defmodule Exercise.CountriesTest do
   use Exercise.DataCase
 
   alias Exercise.Countries
-
+  alias Exercise.Fixtures
 
   @currency_valid_attrs %{
     code: "ABC",
@@ -37,23 +37,13 @@ defmodule Exercise.CountriesTest do
   describe "currencies" do
     alias Exercise.Countries.Currency
 
-
-    def currency_fixture(attrs \\ %{}) do
-      {:ok, currency} =
-        attrs
-        |> Enum.into(@currency_valid_attrs)
-        |> Countries.create_currency()
-
-      currency
-    end
-
     test "list_currencies/0 returns all currencies" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert Countries.list_currencies() == [currency]
     end
 
     test "get_currency!/1 returns the currency with given id" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert Countries.get_currency!(currency.id) == currency
     end
 
@@ -69,7 +59,7 @@ defmodule Exercise.CountriesTest do
     end
 
     test "update_currency/2 with valid data updates the currency" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert {:ok, %Currency{} = currency} = Countries.update_currency(currency, @currency_update_attrs)
       assert currency.code == @currency_update_attrs.code
       assert currency.name == @currency_update_attrs.name
@@ -77,19 +67,19 @@ defmodule Exercise.CountriesTest do
     end
 
     test "update_currency/2 with invalid data returns error changeset" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @currency_invalid_attrs)
       assert currency == Countries.get_currency!(currency.id)
     end
 
     test "delete_currency/1 deletes the currency" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert {:ok, %Currency{}} = Countries.delete_currency(currency)
       assert_raise Ecto.NoResultsError, fn -> Countries.get_currency!(currency.id) end
     end
 
     test "change_currency/1 returns a currency changeset" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert %Ecto.Changeset{} = Countries.change_currency(currency)
     end
 
@@ -99,34 +89,34 @@ defmodule Exercise.CountriesTest do
     end
 
     test "update_currency/2 with non ISO 4127 currency.code returns error changeset" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
 
       assert {:error, %Ecto.Changeset{}} =
                Countries.update_currency(currency, %{@currency_valid_attrs | :code => "invalid code"})
     end
 
     test "get_currency_by_code!/1 returns the currency with given code" do
-      currency = currency_fixture()
+      currency = Fixtures.currency_fixture()
       assert Countries.get_currency_by_code!(currency.code) == currency
     end
 
     test "get_currency_by_code!/1 returns error when currency.code not found" do
-      currency_fixture()
+      Fixtures.currency_fixture()
       assert_raise Ecto.NoResultsError, fn -> Countries.get_currency_by_code!("000") end
     end
 
     test "create_currency/1 with existing currency code and name returns error changeset" do
       # create currency with @currency_valid_attrs
-      currency_fixture()
+      Fixtures.currency_fixture(@currency_valid_attrs)
       assert [@currency_valid_attrs] = Countries.list_currencies()
       # expecting another fixture to fail with the same @currency_valid_attrs
       assert {:error, %Ecto.Changeset{}} = Countries.create_currency(@currency_valid_attrs)
     end
 
     test "update_currency/1 to an existing currency returns error changeset" do
-      _first_currency = currency_fixture(@currency_valid_attrs)
+      _first_currency = Fixtures.currency_fixture(@currency_valid_attrs)
       # create another currency with different name and code
-      currency = currency_fixture(%{@currency_valid_attrs | code: "XYZ", name: "name"})
+      currency = Fixtures.currency_fixture(%{@currency_valid_attrs | code: "XYZ", name: "name"})
       # updating currency to existing code and name (_first_currency)
       assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @currency_valid_attrs)
     end
