@@ -1,6 +1,7 @@
 defmodule ExerciseWeb.EmployeeControllerTest do
   use ExerciseWeb.ConnCase
   alias Exercise.Employees.Employee
+  alias Exercise.Fixtures
 
   @create_attrs %{
     full_name: "some full_name",
@@ -15,7 +16,13 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   @invalid_attrs %{full_name: nil, job_title: nil, salary: nil}
 
   setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+    currency = Fixtures.currency_fixture()
+    country = Fixtures.country_fixture(%{currency_id: currency.id})
+    {:ok,
+      conn: put_req_header(conn, "accept", "application/json"),
+      country: country,
+      currency: currency
+    }
   end
 
   describe "index" do
@@ -26,8 +33,8 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   end
 
   describe "create employee" do
-    test "renders employee when data is valid", %{conn: conn} do
-      conn = post(conn, ~p"/api/employees", employee: @create_attrs)
+    test "renders employee when data is valid", %{conn: conn, country: country} do
+      conn = post(conn, ~p"/api/employees", employee: employee_attr(@create_attrs, country))
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get(conn, ~p"/api/employees/#{id}")
@@ -40,8 +47,8 @@ defmodule ExerciseWeb.EmployeeControllerTest do
              } = json_response(conn, 200)["data"]
     end
 
-    test "renders errors when data is invalid", %{conn: conn} do
-      conn = post(conn, ~p"/api/employees", employee: @invalid_attrs)
+    test "renders errors when data is invalid", %{conn: conn, country: country} do
+      conn = post(conn, ~p"/api/employees", employee:  employee_attr(@invalid_attrs, country))
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
@@ -49,8 +56,8 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   describe "update employee" do
     setup [:create_employee]
 
-    test "renders employee when data is valid", %{conn: conn, employee: %Employee{id: id} = employee} do
-      conn = put(conn, ~p"/api/employees/#{employee}", employee: @update_attrs)
+    test "renders employee when data is valid", %{conn: conn, employee: %Employee{id: id} = employee, country: country} do
+      conn = put(conn, ~p"/api/employees/#{employee}", employee: employee_attr(@update_attrs, country))
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(conn, ~p"/api/employees/#{id}")
@@ -63,8 +70,8 @@ defmodule ExerciseWeb.EmployeeControllerTest do
              } = json_response(conn, 200)["data"]
     end
 
-    test "renders errors when data is invalid", %{conn: conn, employee: employee} do
-      conn = put(conn, ~p"/api/employees/#{employee}", employee: @invalid_attrs)
+    test "renders errors when data is invalid", %{conn: conn, employee: employee, country: country} do
+      conn = put(conn, ~p"/api/employees/#{employee}", employee: employee_attr(@invalid_attrs, country))
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
@@ -82,21 +89,13 @@ defmodule ExerciseWeb.EmployeeControllerTest do
     end
   end
 
-  defp employee_fixture(attrs \\ %{}) do
-    {:ok, employee} =
-      attrs
-      |> Enum.into(%{
-        full_name: "some full_name",
-        job_title: "some job_title",
-        salary: 42
-      })
-      |> Exercise.Employees.create_employee()
 
-    employee
+  defp create_employee(%{country: country}) do
+    employee = Fixtures.employee_fixture(%{country_id: country.id})
+    %{employee: employee}
   end
 
-  defp create_employee(_) do
-    employee = employee_fixture()
-    %{employee: employee}
+  defp employee_attr(attrs, %{id: id} = _country) do
+    Map.put(attrs, :country_id, id)
   end
 end
