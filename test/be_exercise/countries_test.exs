@@ -127,8 +127,8 @@ defmodule Exercise.CountriesTest do
 
     test "create_country/1 with valid data creates a country" do
       assert {:ok, %Country{} = country} = Countries.create_country(@valid_attrs)
-      assert country.code == "some code"
-      assert country.name == "some name"
+      assert country.code == @valid_attrs.code
+      assert country.name == @valid_attrs.name
     end
 
     test "create_country/1 with invalid data returns error changeset" do
@@ -138,8 +138,8 @@ defmodule Exercise.CountriesTest do
     test "update_country/2 with valid data updates the country" do
       country = country_fixture()
       assert {:ok, %Country{} = country} = Countries.update_country(country, @update_attrs)
-      assert country.code == "some updated code"
-      assert country.name == "some updated name"
+      assert country.code == @update_attrs.code
+      assert country.name == @update_attrs.name
     end
 
     test "update_country/2 with invalid data returns error changeset" do
@@ -159,8 +159,16 @@ defmodule Exercise.CountriesTest do
       assert %Ecto.Changeset{} = Countries.change_country(country)
     end
 
-    # test "country code must comply with country code alpha-3"
-    # test "cannot insert country without valid currency"
+    test "create_country/1 with non alpha-3 country.code returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Countries.create_country(%{@valid_attrs | :code => "invalid code"})
+    end
+
+    test "update_country/2 with non alpha-3 country.code returns error changeset" do
+      country = country_fixture()
+      assert {:error, %Ecto.Changeset{}}  = Countries.update_country(country, %{@valid_attrs | :code => "invalid code"})
+    end
+
+    # test "cannot insert country without valid currency" do
     # test "cannot update country's currency once set"
       # would require all employee salaries to be converted. countries don't change their currencies. In such rare scenario, DB should be carefully updated using an external service rather than letting this happen via API.
     # test "removing currency affects countries referencing the currency"

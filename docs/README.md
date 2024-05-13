@@ -44,7 +44,9 @@ It follows the architecture of a standard, generated phoenix project.
 
 - [] **Testing**
   - [] expand current solution test coverage
-  - [] Employees table
+    - [x] Currency
+    - [] Country
+    - [] Employee
   - [] 
 
 - [] **Metrics** endpoints
