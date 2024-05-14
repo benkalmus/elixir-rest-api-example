@@ -115,8 +115,40 @@ defmodule Exercise.Employees do
 
     {:ok, [%Employee{}], [%Ecto.Changeset{}] }
   """
-  #TODO clean this up
+  #TODO, can we make this function generic?
   def batch_write(employee_attrs) do
+    #number of async workers should match to number of DB connections. Defaults to 10.
+    pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
+
+    {created_employees, invalid_changesets} =
+      employee_attrs
+      |> Task.async_stream(fn attr ->
+          case create_employee(attr) do
+            {:ok, employee} -> employee
+            # on failure, return the attributes and changeset
+            {:error, changeset} -> {attr, changeset}
+          end
+        end, max_concurrency: pool_size, on_timeout: :kill_task)
+      # separate results into two lists: employees and failed changesets
+      |> Enum.reduce({[],[]},
+        fn {:ok, {_attr, _changeset} = r}, {successes, failures} ->
+          {successes, [r | failures]};
+        {:ok, employee}, {successes, failures} ->
+          {[employee | successes], failures}
+        end)
+
+    {:ok, created_employees, invalid_changesets}
+  end
+
+  @doc """
+    Batch writes employees to the database using Repo.insert_all.
+    NOTE: This operation does not perform validations like Repo.insert, and should be used with caution.
+
+    Returns two lists, successful employee creations and failed changesets.
+    {:ok, [%Employee{}], [%Ecto.Changeset{}] }
+  """
+  #TODO, can we make this function generic?
+  def batch_write_unsafe(employee_attrs) do
     # drive this via config, but not pool_size
     pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
     # insert_all doesn't autogenerate timestamps, generate them ourselves.
@@ -155,8 +187,6 @@ defmodule Exercise.Employees do
       end)
     end)
 
-
-    # IO.inspect(pool_size)
     {:ok, successful, failed}
   end
 end

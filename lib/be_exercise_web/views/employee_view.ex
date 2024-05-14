@@ -18,12 +18,15 @@ defmodule ExerciseWeb.EmployeeView do
 
   def batch_result(%{successful: successful, failed: failed}) do
     # Ecto.Changeset.traverse_errors(failed, &(&1))
-    errors = Enum.map(failed, fn f ->
-      Ecto.Changeset.traverse_errors(f, &ExerciseWeb.ErrorHelpers.translate_error/1)
+    errors = Enum.map(failed, fn {_attr, changeset} ->
+      Ecto.Changeset.traverse_errors(changeset, &ExerciseWeb.ErrorHelpers.translate_error/1)
     end)
-    render_successful = successful
+
+    render_successful =
+      successful
       |> Exercise.Repo.preload(:country)
       |>Enum.map(&data/1)
+
     %{successful: render_successful, failed: errors}
   end
 

@@ -152,7 +152,7 @@ defmodule Exercise.Seed do
     # split employees into N batches and post them to batch_write
     employees
       |> Enum.chunk_every(@batch_size)
-      |> Enum.each(&Employees.batch_write/1)
+      |> Enum.each(&Employees.batch_write_unsafe/1)
   end
 
   #Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000
