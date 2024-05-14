@@ -7,7 +7,7 @@ defmodule Exercise.Fixtures do
   alias Exercise.Employees
 
   @doc """
-  Generate a currency.
+  Inserts a currency into DB with given attributes.
   """
   def currency_fixture(attrs \\ %{}) do
     {:ok, currency} =
@@ -23,7 +23,7 @@ defmodule Exercise.Fixtures do
   end
 
   @doc """
-  Generate a country given a valid currency_id.
+  Inserts a country given a valid :currency_id into DB.
   """
   def country_fixture(%{currency_id: _} = attrs) do
     # country must have a valid currency association
@@ -39,7 +39,7 @@ defmodule Exercise.Fixtures do
   end
 
   @doc """
-  Generate an employee given a valid country_id.
+  Inserts an employee given a valid :country_id into DB.
   """
   def employee_fixture(%{country_id: _} = attrs) do
     {:ok, employee} =

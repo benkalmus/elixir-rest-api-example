@@ -40,6 +40,7 @@ defmodule Exercise.EmployeesTest do
       assert employee.full_name == "some full_name"
       assert employee.job_title == "some job_title"
       assert employee.salary == 42
+      assert employee.country_id == country.id
     end
 
     test "create_employee/1 with invalid data returns error changeset", %{country:  country} do
@@ -73,6 +74,7 @@ defmodule Exercise.EmployeesTest do
       assert %Ecto.Changeset{} = Employees.change_employee(employee)
     end
 
+    # todo does this belong in countries test?
     test "remove country with associated employee should return error changeset", %{country: country} do
       _employee = Fixtures.employee_fixture(%{country_id: country.id})
       assert {:error, %Ecto.Changeset{}} = Exercise.Countries.delete_country(country)
@@ -81,6 +83,9 @@ defmodule Exercise.EmployeesTest do
     test "create_employee/1 with a non-existing country returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Employees.create_employee(Map.put(@valid_attrs, :country_id, -1))
     end
+
+    #invalid salary insert, -10_000
+    #updating employee's country, should convert salary
 
     test "batch_write/1 with a valid list of employees creates them", %{country: country} do
       employee_batches =  [
