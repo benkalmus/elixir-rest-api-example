@@ -98,8 +98,10 @@ It follows the architecture of a standard, generated phoenix project.
     - Pass in collectable and write multiple employees in one request. 
       - return success and failure lists, so that client can fix and retry
     - could expose insert_all for even faster writes, but doesn't perform validation. Should not expose this to web API. 
+      - extremely fast writes: 100k inserts in 5sec
+
     - Parallel pipeline: producer->consumer.
-      - employee records -> spawn worker pool: perform changeset validation -> DB writer: Repo.insert 
+      - employee records -> spawn worker pool: perform changeset validation -> DB writers (match pool_size): Repo.insert 
       - Task.async_stream -> insert_all
 
 

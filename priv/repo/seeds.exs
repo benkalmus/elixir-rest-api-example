@@ -25,6 +25,8 @@ defmodule Exercise.Seed do
   @insert_currencies true
   @job_title_subset_num 100
   @seed {1, 2, 3}
+  #number of employees to insert in a single request to batch_write
+  @batch_size 10000
   @num_employees 10_000 #TODO
 
 
@@ -148,10 +150,9 @@ defmodule Exercise.Seed do
 
   def insert_employees(employees) do
     # split employees into N batches and post them to batch_write
-    batch_size = 10000
-    employees |> Enum.chunk_every(batch_size) |> Enum.each(&Employees.batch_write/1)
-
-    # employees |> Enum.each(&Employees.create_employee/1)
+    employees
+      |> Enum.chunk_every(@batch_size)
+      |> Enum.each(&Employees.batch_write/1)
   end
 
   #Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000

@@ -4,6 +4,7 @@ defmodule Exercise.Employees do
   """
 
   import Ecto.Query, warn: false
+  require Logger
   alias Exercise.Repo
 
   alias Exercise.Employees.Employee
@@ -114,19 +115,43 @@ defmodule Exercise.Employees do
 
     {:ok, [%Employee{}], [%Ecto.Changeset{}] }
   """
+  #TODO clean this up
   def batch_write(employee_attrs) do
-    changesets = Enum.map(employee_attrs, &Employee.changeset(%Employee{}, &1))
-    # todo, filter valid? == false changesets
-
+    # drive this via config, but not pool_size
+    pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
+    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+    dates = %{
+      inserted_at: datetime,
+      updated_at: datetime
+    }
     {successful, failed} =
-      Enum.reduce(changesets, {[], []}, fn changeset, {s_acc, f_acc} ->
-        case Repo.insert(changeset) do
-          {:ok, record} ->
-            {[record | s_acc], f_acc}
-          {:error, c} ->
-            {s_acc, [c | f_acc]}
+      employee_attrs
+      |> Task.async_stream(fn attr ->
+        c = Employee.changeset(%Employee{}, attr)
+
+        new_attr = dates |> Enum.into(attr)
+        case c.valid? do
+          true -> {:ok, new_attr} #Repo.insert(c)
+          false -> {:error, c}
         end
+      end, max_concurrency: pool_size)
+      |> Enum.reduce({[],[]},
+        fn {:ok, {:ok, success}}, {s, f} ->
+          {[success|s], f};
+        failed, {s, f} ->
+          {s, [failed|f]}
+        end)
+
+    successful
+    |> Enum.chunk_every(10000)
+    |> Enum.each( fn chunk ->
+      Repo.transaction(fn ->
+        Repo.insert_all(Employee, chunk)
       end)
+    end)
+
+
+    # IO.inspect(pool_size)
     {:ok, successful, failed}
   end
 end
