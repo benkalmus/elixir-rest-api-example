@@ -43,7 +43,7 @@ It follows the architecture of a standard, generated phoenix project.
     - `mix phx.gen.json Employees Employee employees full_name:string job_title:string salary:integer country:references:countries`
   - [x] add country_id foreign key 
   - [] Is integer the right type to use for salary?
-  
+
 
 - [x] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
   - [x] Separate seeding functionality for maintainability of seeds.exs
@@ -83,6 +83,7 @@ It follows the architecture of a standard, generated phoenix project.
     - [] Supervision tree and module hierarchy
     - [] DB Model
     - []
+  - [] Document API. Usage and possible returns
   - [] seed.exs script usage
 
 ## Exploring optimizations and Design decisions
