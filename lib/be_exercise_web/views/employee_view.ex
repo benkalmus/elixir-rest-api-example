@@ -16,16 +16,23 @@ defmodule ExerciseWeb.EmployeeView do
     %{data: data(employee)}
   end
 
+  @doc """
+  Renders a batched insert results into successful and failed lists.
+  ## TODO Example
+  """
   def batch_result(%{successful: successful, failed: failed}) do
-    # Ecto.Changeset.traverse_errors(failed, &(&1))
-    errors = Enum.map(failed, fn {_attr, changeset} ->
-      Ecto.Changeset.traverse_errors(changeset, &ExerciseWeb.ErrorHelpers.translate_error/1)
+    errors = Enum.map(failed, fn {attr, changeset} ->
+      error = Ecto.Changeset.traverse_errors(changeset, &ExerciseWeb.ErrorHelpers.translate_error/1)
+      %{
+        params: attr,
+        error: error
+      }
     end)
 
     render_successful =
       successful
-      |> Exercise.Repo.preload(:country)
-      |>Enum.map(&data/1)
+      |> Exercise.Repo.preload(:country)  #preload for country.id
+      |> Enum.map(&data/1)
 
     %{successful: render_successful, failed: errors}
   end

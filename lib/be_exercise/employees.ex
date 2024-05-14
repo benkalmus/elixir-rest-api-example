@@ -111,9 +111,9 @@ defmodule Exercise.Employees do
 
   @doc """
     Batch writes employees to the database.
-    Returns two lists, successful employee creations and failed changesets.
+    Returns two lists, successfully created Employee{} structs and failed Ecto.Changesets{}.
 
-    {:ok, [%Employee{}], [%Ecto.Changeset{}] }
+    {:ok, [ %Employee{} ], [ %Ecto.Changeset{} ]}
   """
   #TODO, can we make this function generic?
   def batch_write(employee_attrs) do
@@ -187,6 +187,6 @@ defmodule Exercise.Employees do
       end)
     end)
 
-    {:ok, successful, failed}
+    {:ok, %{successful: successful, failed: failed}}
   end
 end

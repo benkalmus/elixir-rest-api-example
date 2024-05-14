@@ -43,7 +43,7 @@ defmodule ExerciseWeb.EmployeeController do
   end
 
   def batch_write(conn, %{"employees" => employee_params} = _params) do
-    {:ok, successful, failed} = Employees.batch_write(employee_params)
-    render(conn, :batch_result, %{successful: successful, failed: failed})
+    {:ok, employees, changesets} = Employees.batch_write(employee_params)
+    render(conn, :batch_result, %{successful: employees, failed: changesets})
   end
 end

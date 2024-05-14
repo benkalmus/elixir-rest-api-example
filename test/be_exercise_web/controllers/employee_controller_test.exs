@@ -55,7 +55,9 @@ defmodule ExerciseWeb.EmployeeControllerTest do
     test "batch_write returns lists of successes and failures", %{conn: conn, country: country} do
       country_id = country.id
       employee_batches =  [
+        ## valid
         %{full_name: "John Smith", job_title: "Developer", country_id: country_id, salary: 50_000},
+        ## invalid
         %{full_name: "Jack Johnson", job_title: "Manager", country_id: -1, salary: 60_000}
       ]
       conn = post(conn, Routes.employee_path(conn, :batch_write), employees: employee_batches)
@@ -67,8 +69,16 @@ defmodule ExerciseWeb.EmployeeControllerTest do
         "country_id" => ^country_id
       }] = response["successful"]
 
-      #TODO improve failed verbosity
-      assert [%{"country_id" => ["does not exist"]}] = response["failed"]
+      # failures should be descriptive:
+      assert [%{
+        "error" => %{"country_id" => ["does not exist"]},
+        "params" => %{
+          "full_name" => "Jack Johnson",
+          "job_title" => "Manager",
+          "salary" => 60_000,
+          "country_id" => -1
+        }
+      }] = response["failed"]
 
     end
   end
