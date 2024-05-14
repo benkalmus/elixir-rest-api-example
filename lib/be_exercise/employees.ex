@@ -119,34 +119,39 @@ defmodule Exercise.Employees do
   def batch_write(employee_attrs) do
     # drive this via config, but not pool_size
     pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
-    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
-    dates = %{
-      inserted_at: datetime,
-      updated_at: datetime
+    # insert_all doesn't autogenerate timestamps, generate them ourselves.
+    #Add timestamps as placeholders
+    date_placeholders = %{
+      inserted_at: {:placeholder, :datetime},
+      updated_at: {:placeholder, :datetime}
     }
+    # perform changeset validation, note that this won't check constraints (as this is done on Repo.insert)
     {successful, failed} =
       employee_attrs
       |> Task.async_stream(fn attr ->
         c = Employee.changeset(%Employee{}, attr)
 
-        new_attr = dates |> Enum.into(attr)
+        new_attr = date_placeholders |> Enum.into(attr)
         case c.valid? do
-          true -> {:ok, new_attr} #Repo.insert(c)
-          false -> {:error, c}
+          true -> {:ok, new_attr}
+          false -> {:error, {attr, c}}
         end
-      end, max_concurrency: pool_size)
+      end, max_concurrency: pool_size, on_timeout: :kill_task)
       |> Enum.reduce({[],[]},
         fn {:ok, {:ok, success}}, {s, f} ->
           {[success|s], f};
-        failed, {s, f} ->
+        {:ok, {:error, failed}}, {s, f} ->
           {s, [failed|f]}
+        _, acc -> acc     #task failed
         end)
 
+    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
     successful
-    |> Enum.chunk_every(10000)
+    |> Enum.chunk_every(10000) #insert might fail if chunk too large (when number of fields in employee table is high)
     |> Enum.each( fn chunk ->
       Repo.transaction(fn ->
-        Repo.insert_all(Employee, chunk)
+        #todo handle transaction error
+        Repo.insert_all(Employee, chunk, placeholders: %{datetime: datetime})
       end)
     end)
 

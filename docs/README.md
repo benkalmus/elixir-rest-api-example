@@ -11,7 +11,7 @@ It follows the architecture of a standard, generated phoenix project.
 ## Reqs
 - [x] Fix existing bugs in the application
 - [x] Create an employee resource
-- Seed script
+- [x] Seed script
 - Salary metrics endpoint
 
 ### TODOs
@@ -38,16 +38,18 @@ It follows the architecture of a standard, generated phoenix project.
     - [x] currency code unique
     - [x] country code unique
 
-- [x] Employee context
+- [x] **Employee** CRUD
   - [x] Used phoenix generator
     - `mix phx.gen.json Employees Employee employees full_name:string job_title:string salary:integer country:references:countries`
   - [x] add country_id foreign key 
+  - [] Is integer the right type to use for salary?
+  
 
-- [] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
+- [x] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
   - [x] Separate seeding functionality for maintainability of seeds.exs
-  - Potential improvement: generate_employee/4 can be ran concurrently. May help when seeding millions of records
+  - [x] Concurrent batch_write. Speeds up bullk insert of records
 
-- [] Improve application logging 
+- [] **Logging**  application logging 
 
 - [] **Testing**
   - [] expand current solution test coverage
@@ -78,6 +80,9 @@ It follows the architecture of a standard, generated phoenix project.
 - [] **Documentation**. Ensure @spec and doc comments are provided on all API (with examples where relevant)
   - [x] Generate initial app diagram
   - [] Diagrams: generate sequence diagrams for API
+    - [] Supervision tree and module hierarchy
+    - [] DB Model
+    - []
   - [] seed.exs script usage
 
 ## Exploring optimizations and Design decisions
@@ -86,24 +91,27 @@ It follows the architecture of a standard, generated phoenix project.
   - refactor API so that functions use one or the other. Raising exceptions stacktrace overhead
     - exceptions in get! is idiomatic elixir. 
 
-- [x] Resolving deletes on rows with foreign key references, such as deleting a Currency with a Country reference. 
+- [x] **Resolving deletes** on rows with foreign key references, such as deleting a Currency with a Country reference. 
   Options:
   - allow delete: dangling rows with no foreign key reference will need to be handled in application
   - safe delete: only if all children of parent have been removed and no FK references exist. 
-  - Decided to go with :restrict option :on_delete. This will prevent orphaning records. 
+  - **Decided** to go with :restrict option :on_delete. This will prevent orphaning records. 
 
-- [] **batched inserts** 
+- [x] **batched inserts** 
   - current insert takes too long to seed database with hundreds of thousands of records
   - add endpoint to batch_write multiple employee records. Options:
     - Pass in collectable and write multiple employees in one request. 
       - return success and failure lists, so that client can fix and retry
     - could expose insert_all for even faster writes, but doesn't perform validation. Should not expose this to web API. 
       - extremely fast writes: 100k inserts in 5sec
-
     - Parallel pipeline: producer->consumer.
       - employee records -> spawn worker pool: perform changeset validation -> DB writers (match pool_size): Repo.insert 
       - Task.async_stream -> insert_all
-
+  - **solution:**
+    - **batch_write**: accepts a list of employee attributes, validates and performs insert. 
+      - using Task.async_stream in parallel, with :pool_size number of workers. Easiest, and readable way to spawn worker pool.
+    - **batch_write_unsafe**: accepts a list of employee attributes, however, json API is forbidden and only the `seeds.exs` script is allowed to use it. This is because it uses insert_all which doesn't perform any validation.
+      - splits input into mini batches as postgresql has a parameter limit 
 
 
 - **Employee** table: Consider DB relationship between Employees and Countries. https://hexdocs.pm/ecto/associations.html 
@@ -135,7 +143,6 @@ It follows the architecture of a standard, generated phoenix project.
 - **Metrics cache**: 
 - Employee metrics record is currently the only place this app is going to do **work** (calculations). Therefore we should store this work in a cache for faster retrieval
   - In-memory Cache options: 
-    - **ETS**. 
     - Gen servers & state
   - Consider ways to **invalidate** the cache.
     - Time expiry. Can cause served data to be stale
@@ -143,7 +150,11 @@ It follows the architecture of a standard, generated phoenix project.
       - what if another application makes changes to the DB? should I assume that only this app can alter DB? 
         - Manually invalidate cache on writes. Pubsub mechanism & Gen server pool
         - postgresql notify 
-
+  - **ETS**:
+    - simple cache wrapper around ETS with a supervisor process table owner, simple_cache:start(:employee_salary_metrics)
+    - set, public, read_concurrency, true as I expect read bursts and infrequent writes. 
+    - something like: {cache_key, {cache_value, insert_datetime}}
+    - Employee insert/delete invalidate all Employee cache values
 
 ## Future considerations
 - **Distributed sys**: 

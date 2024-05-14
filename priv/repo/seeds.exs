@@ -105,9 +105,8 @@ defmodule Exercise.Seed do
   end
 
   def generate_employees(%{:employees => true} = opts) do
-    IO.puts("\nInserting employees\n")
     num_employees = opts[:number]
-    IO.puts("Generating #{num_employees} employees\n")
+    IO.puts("\nInserting employees #{num_employees}\n")
     # read first and last names file
     first_names = File.stream!("priv/data/first_names.txt") |> Enum.to_list() |> Enum.map(&String.trim_trailing/1)
     last_names = File.stream!("priv/data/first_names.txt") |> Enum.to_list() |> Enum.map(&String.trim_trailing/1)
@@ -124,6 +123,7 @@ defmodule Exercise.Seed do
     employee_records |> Enum.take(5) |> Enum.map(fn e ->
         IO.puts("INSERT:\n#{inspect(e)}\n")
       end)
+    IO.puts("Generated #{length(employee_records)} employees\n")
     insert_employees(employee_records)
     num_inserted = length(Employees.list_employees())
     IO.puts("Inserted #{num_inserted} employees\n")
