@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: exercise
     volumes:
-      - ./../db/data:/var/lib/postgresql/data
-      - ./../db/log:/var/log/postgresql
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/log:/var/log/postgresql
     ports:
       - "127.0.0.1:5432:5432"
