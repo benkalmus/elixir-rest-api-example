@@ -1,5 +1,6 @@
 defmodule ExerciseWeb.EmployeeView do
   use ExerciseWeb, :view
+  alias Exercise.Employees
   alias Exercise.Employees.Employee
 
   @doc """
@@ -31,19 +32,20 @@ defmodule ExerciseWeb.EmployeeView do
 
     render_successful =
       successful
-      |> Exercise.Repo.preload(:country)  #preload for country.id
       |> Enum.map(&data/1)
 
     %{successful: render_successful, failed: errors}
   end
 
   defp data(%Employee{} = employee) do
+    employee = Employees.preload(employee)
     %{
       id: employee.id,
       full_name: employee.full_name,
       job_title: employee.job_title,
       salary: employee.salary,
-      country_id: employee.country.id
+      country_id: employee.country.id,
+      currency_code: employee.country.currency.code
     }
   end
 end

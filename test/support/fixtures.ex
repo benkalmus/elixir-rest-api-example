@@ -4,11 +4,14 @@ defmodule Exercise.Fixtures do
   entities
   """
   alias Exercise.Countries
+  alias Exercise.Countries.{Country, Currency}
   alias Exercise.Employees
+  alias Exercise.Employees.{Employee}
 
   @doc """
   Inserts a currency into DB with given attributes.
   """
+  @spec currency_fixture(map()) :: %Currency{}
   def currency_fixture(attrs \\ %{}) do
     {:ok, currency} =
       attrs
@@ -25,6 +28,7 @@ defmodule Exercise.Fixtures do
   @doc """
   Inserts a country given a valid :currency_id into DB.
   """
+  @spec country_fixture(%{currency_id: integer()}) :: %Country{}
   def country_fixture(%{currency_id: _} = attrs) do
     # country must have a valid currency association
     {:ok, country} =
@@ -35,12 +39,13 @@ defmodule Exercise.Fixtures do
         })
       |> Countries.create_country()
 
-    country
+    Countries.preload(country)
   end
 
   @doc """
   Inserts an employee given a valid :country_id into DB.
   """
+  @spec employee_fixture(map()) :: %Employee{}
   def employee_fixture(%{country_id: _} = attrs) do
     {:ok, employee} =
       attrs
@@ -51,7 +56,7 @@ defmodule Exercise.Fixtures do
         })
       |> Employees.create_employee()
 
-    employee |> Exercise.Repo.preload(:country)
+    Employees.preload(employee)
   end
 
 end

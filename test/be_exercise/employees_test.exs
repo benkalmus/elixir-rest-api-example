@@ -27,12 +27,18 @@ defmodule Exercise.EmployeesTest do
 
     test "list_employees/0 returns all employees", %{country: country} do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
-      assert Employees.list_employees() == [employee]
+      list =
+        Employees.list_employees()
+        |> Enum.map(&Employees.preload(&1))
+      assert list == [employee]
     end
 
     test "get_employee!/1 returns the employee with given id", %{country: country} do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
-      assert Employees.get_employee!(employee.id) == employee
+      get =
+        Employees.get_employee!(employee.id)
+        |> Employees.preload()
+      assert get == employee
     end
 
     test "create_employee/1 with valid data creates a employee", %{country:  country} do
@@ -55,12 +61,13 @@ defmodule Exercise.EmployeesTest do
       assert employee.full_name == "some updated full_name"
       assert employee.job_title == "some updated job_title"
       assert employee.salary == 43
+      assert employee.country_id == country.id
     end
 
     test "update_employee/2 with invalid data returns error changeset", %{country: country} do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
       assert {:error, %Ecto.Changeset{}} = Employees.update_employee(employee, @invalid_attrs)
-      assert employee == Employees.get_employee!(employee.id)
+      assert employee == Employees.preload(Employees.get_employee!(employee.id))
     end
 
     test "delete_employee/1 deletes the employee", %{country: country} do
@@ -96,11 +103,13 @@ defmodule Exercise.EmployeesTest do
 
       assert length(successful) == length(employee_batches)
       # ensure employees were written to DB, retrieve and compare them
-      all = Employees.list_employees()
+      all =
+        Employees.list_employees()
+        |> Enum.map(&Employees.preload(&1))
       #TODO improve this comparison, on error we can't see which element failed
       assert true = Enum.all?(successful, fn employee ->
         Enum.any?(all, fn e ->
-          e == employee |> Exercise.Repo.preload(:country)
+          e == Employees.preload(employee)
         end)
       end)
     end

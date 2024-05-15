@@ -26,9 +26,25 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   end
 
   describe "index" do
-    test "lists all employees", %{conn: conn} do
+    test "lists zero employees", %{conn: conn} do
       conn = get(conn, ~p"/api/employees")
       assert json_response(conn, 200)["data"] == []
+    end
+
+    test "lists all employees", %{conn: conn, country: country = %{id: country_id}} do
+      %Employee{id: id} = Fixtures.employee_fixture(employee_attr(@create_attrs, country))
+      conn = get(conn, ~p"/api/employees")
+      country = Exercise.Repo.preload(country, :currency)
+      currency_code = country.currency.code
+      salary = Decimal.new(42)
+      assert [%{
+        "id" => ^id,
+        "full_name" => "some full_name",
+        "job_title" => "some job_title",
+        "salary" => ^salary,
+        "country_id" => ^country_id,
+        "currency_code" => ^currency_code
+      }] = json_response(conn, 200)["data"]
     end
   end
 
@@ -88,13 +104,14 @@ defmodule ExerciseWeb.EmployeeControllerTest do
 
     test "renders employee when id is valid", %{conn: conn, employee: employee} do
       conn = get(conn, Routes.employee_path(conn, :show, employee.id))
-
+      # currency_code = employee.country.currency.code
       assert %{
                "id" => employee.id,
                "full_name" => employee.full_name,
                "salary" => employee.salary,
                "job_title" => employee.job_title,
-               "country_id" => employee.country.id
+               "country_id" => employee.country.id,
+               "currency_code" => employee.country.currency.code
              } == json_response(conn, 200)["data"]
     end
 

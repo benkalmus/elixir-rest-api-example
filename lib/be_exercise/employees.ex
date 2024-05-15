@@ -20,7 +20,6 @@ defmodule Exercise.Employees do
   """
   def list_employees do
     Repo.all(Employee)
-    |> Repo.preload(:country)
   end
 
   @doc """
@@ -41,7 +40,6 @@ defmodule Exercise.Employees do
 
   def get_employee!(id) do
     Repo.get!(Employee, id)
-    |> Repo.preload(:country)
   end
 
   @doc """
@@ -189,4 +187,13 @@ defmodule Exercise.Employees do
 
     {:ok, %{successful: successful, failed: failed}}
   end
+
+  @doc """
+  Helper function for preloading Employee and all its associations.
+  """
+  @spec preload(employee :: %Employee{}) :: %Employee{}
+  def preload(employee = %Employee{}) do
+    Repo.preload(employee, [:country, country: :currency])
+  end
+
 end
