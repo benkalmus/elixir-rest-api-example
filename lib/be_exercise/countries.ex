@@ -226,4 +226,15 @@ defmodule Exercise.Countries do
   def change_country(%Country{} = country, attrs \\ %{}) do
     Country.changeset(country, attrs)
   end
+
+  @doc """
+  Helper function for preloading Country and Currency associations.
+  """
+  @spec preload(struct) :: struct when struct: Country | Currency
+  def preload(%Country{} = country) do
+    Repo.preload(country, :currency)
+  end
+  def preload(%Currency{} = currency) do # currency doesn't have associations currently
+    currency
+  end
 end

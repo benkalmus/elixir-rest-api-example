@@ -133,12 +133,15 @@ defmodule Exercise.CountriesTest do
 
     test "list_countries/0 returns all countries", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
-      assert Countries.list_countries() == [country]
+      list =
+        Countries.list_countries()
+        |> Enum.map(&Countries.preload(&1))
+      assert list == [country]
     end
 
     test "get_country!/1 returns the country with given id", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
-      assert Countries.get_country!(country.id) == country
+      assert Countries.preload(Countries.get_country!(country.id)) == country
     end
 
     test "create_country/1 with valid data creates a country", %{currency: currency}  do
@@ -163,7 +166,7 @@ defmodule Exercise.CountriesTest do
     test "update_country/2 with invalid data returns error changeset", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
       assert {:error, %Ecto.Changeset{}} = Countries.update_country(country, @country_invalid_attrs)
-      assert country == Countries.get_country!(country.id)
+      assert country == Countries.preload(Countries.get_country!(country.id))
     end
 
     test "delete_country/1 deletes the country", %{currency: currency} do
