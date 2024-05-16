@@ -143,7 +143,7 @@ defmodule Exercise.Employees do
     NOTE: This operation does not perform validations like Repo.insert, and should be used with caution.
 
     Returns two lists, successful employee creations and failed changesets.
-    {:ok, [%Employee{}], [%Ecto.Changeset{}] }
+    {:ok, [employee_attributes :: map()], [%Ecto.Changeset{}] }
   """
   #TODO, can we make this function generic?
   def batch_write_unsafe(employee_attrs) do
@@ -156,7 +156,7 @@ defmodule Exercise.Employees do
       updated_at: {:placeholder, :datetime}
     }
     # perform changeset validation, note that this won't check constraints (as this is done on Repo.insert)
-    {successful, failed} =
+    {valid_attr, invalid_attr_and_changeset} =
       employee_attrs
       |> Task.async_stream(fn attr ->
         c = Employee.changeset(%Employee{}, attr)
@@ -176,7 +176,7 @@ defmodule Exercise.Employees do
         end)
 
     datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
-    successful
+    valid_attr
     |> Enum.chunk_every(10000) #insert might fail if chunk too large (when number of fields in employee table is high)
     |> Enum.each( fn chunk ->
       Repo.transaction(fn ->
@@ -185,7 +185,7 @@ defmodule Exercise.Employees do
       end)
     end)
 
-    {:ok, %{successful: successful, failed: failed}}
+    {:ok, valid_attr, invalid_attr_and_changeset}
   end
 
   @doc """
@@ -196,4 +196,19 @@ defmodule Exercise.Employees do
     Repo.preload(employee, [:country, country: :currency])
   end
 
+  @spec get_all_by_country_id(integer()) :: [%Employee{}] | []
+  def get_all_by_country_id(country_id) do
+    query =
+      from e in Employee,
+      where: e.country_id == ^country_id
+    Repo.all(query)
+  end
+
+  @spec get_all_by_country_id(String.t()) :: [%Employee{}] | []
+  def get_all_by_job_title(job_title) do
+    query =
+      from e in Employee,
+      where: e.job_title == ^job_title
+    Repo.all(query)
+  end
 end

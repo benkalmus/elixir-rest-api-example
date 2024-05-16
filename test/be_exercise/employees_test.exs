@@ -99,25 +99,92 @@ defmodule Exercise.EmployeesTest do
         %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")}
       ]
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
-
       assert length(successful) == length(employee_batches)
-      # ensure employees were written to DB, retrieve and compare them
-      db_employees =
-        Employees.list_employees()
-        |> Enum.map(&Employees.preload(&1))
-        |> Enum.sort()
-
-      successful =
-        successful
-        |> Enum.map(&Employees.preload(&1))
-        |> Enum.sort()
-
-      assert db_employees == successful
+      assert_employee_lists Employees.list_employees(), successful
     end
+
+    test "batch_write_unsafe/1 with a valid list of employees creates them", %{country: country} do
+      employee_batches =  [
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")}
+      ]
+      assert {:ok, valid_attr, []} = Employees.batch_write_unsafe(employee_batches)
+      assert length(valid_attr) == length(employee_batches)
+      all_employees = Employees.list_employees() |> Enum.sort()
+
+      # compare inserted employees to employees with attribtues we tried to insert
+      Enum.zip(all_employees, valid_attr)
+      |> Enum.each(fn {db_employee, attr} ->
+        assert db_employee.full_name == attr.full_name
+        assert db_employee.job_title == attr.job_title
+        assert db_employee.salary == attr.salary
+        assert db_employee.country_id == attr.country_id
+      end)
+
+    end
+
+    test "get_all_by_country_id/1 should return all employees given a valid country id", %{country: country} do
+      another_country = Fixtures.country_fixture(%{
+        currency_id: country.currency.id,
+        code: "ZZZ",
+        name: "another country"
+        })
+      assert another_country.id != country.id # prove another country was created
+      employee_batches =  [
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")},
+        %{full_name: "Billy Jones", job_title: "Manager", country_id: another_country.id, salary: Decimal.new("100000.00")}
+      ]
+      assert {:ok, successful, []} = Employees.batch_write(employee_batches)
+      # filter out successfully inserted employees by country.id
+      successful = Enum.filter(successful, fn e -> e.country_id == country.id end)
+      # run query
+      employees = Employees.get_all_by_country_id(country.id)
+      assert_employee_lists(employees, successful)
+    end
+
+    test "get_all_by_country_id/1 should return no employees given a country with no employees", %{country: country} do
+      Fixtures.employee_fixture(%{country_id: country.id})
+      assert [] = Employees.get_all_by_country_id(-1)
+    end
+
+    test "get_all_by_job_title/1 should return all employees given a valid job title", %{country: country} do
+      job_title = "Manager"
+      employee_batches =  [
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")},
+        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: Decimal.new("100000.00")}
+      ]
+      assert {:ok, successful, []} = Employees.batch_write(employee_batches)
+      # filter out successfully inserted employees by job_title
+      successful = Enum.filter(successful, fn e -> e.job_title == job_title end)
+      # run query
+      employees = Employees.get_all_by_job_title(job_title)
+      assert_employee_lists(employees, successful)
+    end
+
+    test "get_all_by_job_title/1 should return no employees given a job_title with no employees", %{country: country} do
+      Fixtures.employee_fixture(%{country_id: country.id})
+      assert [] = Employees.get_all_by_job_title("This job title shouldn't exist")
+    end
+
 
     #todo
       # valid and invalid lists
     #
 
+    # ensure employees were written to DB, retrieve with preload and compare them
+    defp assert_employee_lists(expected, actual) do
+      expected =
+        expected
+        |> Enum.map(&Employees.preload(&1))
+        |> Enum.sort()
+      actual =
+        actual
+        |> Enum.map(&Employees.preload(&1))
+        |> Enum.sort()
+
+      assert expected == actual
+    end
   end
 end
