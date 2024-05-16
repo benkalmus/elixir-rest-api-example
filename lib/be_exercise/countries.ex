@@ -230,7 +230,7 @@ defmodule Exercise.Countries do
   @doc """
   Helper function for preloading Country and Currency associations.
   """
-  @spec preload(struct) :: struct when struct: Country | Currency
+  @spec preload(struct) :: struct when struct: %Country{} | %Currency{}
   def preload(%Country{} = country) do
     Repo.preload(country, :currency)
   end
