@@ -43,7 +43,7 @@ defmodule ExerciseWeb.EmployeeView do
       id: employee.id,
       full_name: employee.full_name,
       job_title: employee.job_title,
-      salary: employee.salary,
+      salary: Decimal.to_float(employee.salary),    #convert to float
       country_id: employee.country.id,
       currency_code: employee.country.currency.code
     }

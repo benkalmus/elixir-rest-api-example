@@ -78,6 +78,12 @@ defmodule Exercise.CountriesTest do
       assert_raise Ecto.NoResultsError, fn -> Countries.get_currency!(currency.id) end
     end
 
+    test "delete_currency/1 with a country reference returns error changeset" do
+      currency = Fixtures.currency_fixture()
+      _country = Fixtures.country_fixture(%{currency_id: currency.id})
+      assert {:error, %Ecto.Changeset{}} = Countries.delete_currency(currency)
+    end
+
     test "change_currency/1 returns a currency changeset" do
       currency = Fixtures.currency_fixture()
       assert %Ecto.Changeset{} = Countries.change_currency(currency)
@@ -175,6 +181,12 @@ defmodule Exercise.CountriesTest do
       assert_raise Ecto.NoResultsError, fn -> Countries.get_country!(country.id) end
     end
 
+    test "delete_country/1 with associated employee should return error changeset", %{currency: currency} do
+      country = Fixtures.country_fixture(%{currency_id: currency.id})
+      _employee = Fixtures.employee_fixture(%{country_id: country.id})
+      assert {:error, %Ecto.Changeset{}} = Countries.delete_country(country)
+    end
+
     test "change_country/1 returns a country changeset", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
       assert %Ecto.Changeset{} = Countries.change_country(country)
@@ -195,12 +207,6 @@ defmodule Exercise.CountriesTest do
     test "create_country/1 with a non-existing currency returns error changeset" do
       assert {:error, %Ecto.Changeset{}} =
                Countries.create_country(Map.put(@country_valid_attrs, :currency_id, -1))
-    end
-
-    test "delete_currency/1 with a country reference returns error changeset", %{currency: currency} do
-      country = Fixtures.country_fixture(%{currency_id: currency.id})
-      currency = Countries.get_currency!(country.currency_id)
-      assert {:error, %Ecto.Changeset{}} = Countries.delete_currency(currency)
     end
 
     test "create_country/1 with an already existing country name or code returns error changeset" do

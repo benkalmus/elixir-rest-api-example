@@ -52,7 +52,7 @@ defmodule Exercise.Fixtures do
       |> Enum.into(%{
         full_name: "John Smith",
         job_title: "Software Engineer",
-        salary: 50_000
+        salary: Decimal.new("50000.00")
         })
       |> Employees.create_employee()
 
