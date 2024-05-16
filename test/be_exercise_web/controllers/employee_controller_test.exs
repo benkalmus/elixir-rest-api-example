@@ -2,6 +2,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   use ExerciseWeb.ConnCase
   alias Exercise.Employees.Employee
   alias Exercise.Fixtures
+  alias Exercise.DecimalUtils, as: D
 
   @create_attrs %{
     full_name: "some full_name",
@@ -40,7 +41,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
         "id" => ^id,
         "full_name" => "some full_name",
         "job_title" => "some job_title",
-        "salary" => 42.0,
+        "salary" => "42.0000",
         "country_id" => ^country_id,
         "currency_code" => ^currency_code
       }] = json_response(conn, 200)["data"]
@@ -58,7 +59,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
                "id" => ^id,
                "full_name" => "some full_name",
                "job_title" => "some job_title",
-               "salary" => 42.0
+               "salary" => "42.0000"
              } = json_response(conn, 200)["data"]
     end
 
@@ -71,16 +72,16 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       country_id = country.id
       employee_batches =  [
         ## valid
-        %{full_name: "John Smith", job_title: "Developer", country_id: country_id, salary: Decimal.new("50000.0")},
+        %{full_name: "John Smith", job_title: "Developer", country_id: country_id, salary: 50000},
         ## invalid
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: -1, salary: Decimal.new("60000.0")}
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: -1, salary: 60000}
       ]
       conn = post(conn, Routes.employee_path(conn, :batch_write), employees: employee_batches)
       response = json_response(conn, 200)
       assert [%{
         "full_name" => "John Smith",
         "job_title" => "Developer",
-        "salary" => 50_000.0,
+        "salary" => "50000.0000",
         "country_id" => ^country_id
       }] = response["successful"]
 
@@ -90,7 +91,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
         "params" => %{
           "full_name" => "Jack Johnson",
           "job_title" => "Manager",
-          "salary" => "60000.0",
+          "salary" => 60000,
           "country_id" => -1
         }
       }] = response["failed"]
@@ -106,7 +107,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       assert %{
                "id" => employee.id,
                "full_name" => employee.full_name,
-               "salary" => Decimal.to_float(employee.salary),
+               "salary" => D.to_str(employee.salary),
                "job_title" => employee.job_title,
                "country_id" => employee.country.id,
                "currency_code" => employee.country.currency.code
@@ -133,7 +134,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
                "id" => id,
                "full_name" => "some updated full_name",
                "job_title" => "some updated job_title",
-               "salary" => 43.0,
+               "salary" => "43.0000",
                "country_id" => employee.country.id,
                "currency_code" => employee.country.currency.code
              } == json_response(conn, 200)["data"]

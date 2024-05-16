@@ -54,6 +54,7 @@ defmodule ExerciseWeb do
       import Phoenix.Controller
 
       # Defines a "catch all" handler for exceptions raised during routing.
+      # For example, calling a `.get!` returns an `Ecto.NoResultsError` exception.
       @impl Plug.ErrorHandler
       def handle_errors(conn, %{reason: %{message: message}}) do
         conn |> json(%{errors: message}) |> halt()

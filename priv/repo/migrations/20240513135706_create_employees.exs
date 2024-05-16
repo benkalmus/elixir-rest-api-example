@@ -5,7 +5,8 @@ defmodule Exercise.Repo.Migrations.CreateEmployees do
     create table(:employees) do
       add :full_name, :string
       add :job_title, :string
-      add :salary,    :decimal, precision: 15, scale: 2, null: false
+      # precision refers to number of digits, scale refers to digits after decimal point.
+      add :salary,    :decimal, precision: 14, scale: 4, null: false
       add :country_id, references(:countries, on_delete: :restrict)
 
       timestamps()

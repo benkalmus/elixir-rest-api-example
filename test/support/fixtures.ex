@@ -7,6 +7,7 @@ defmodule Exercise.Fixtures do
   alias Exercise.Countries.{Country, Currency}
   alias Exercise.Employees
   alias Exercise.Employees.{Employee}
+  alias Exercise.DecimalUtils, as: D
 
   @doc """
   Inserts a currency into DB with given attributes.
@@ -52,7 +53,7 @@ defmodule Exercise.Fixtures do
       |> Enum.into(%{
         full_name: "John Smith",
         job_title: "Software Engineer",
-        salary: Decimal.new("50000.00")
+        salary: D.new_decimal(50000)
         })
       |> Employees.create_employee()
 

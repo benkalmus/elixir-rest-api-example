@@ -6,8 +6,8 @@ defmodule Exercise.Employees do
   import Ecto.Query, warn: false
   require Logger
   alias Exercise.Repo
-
   alias Exercise.Employees.Employee
+  alias Exercise.DecimalUtils
 
   @doc """
   Returns the list of employees.
@@ -211,4 +211,52 @@ defmodule Exercise.Employees do
       where: e.job_title == ^job_title
     Repo.all(query)
   end
+
+  def salary_metrics_by_country(country_id) do
+    query =
+      from e in Employee,
+      # join: c in Exercise.Countries.Country, on: e.country_id == c.id,
+      where: e.country_id == ^country_id,
+      select: %{
+        min: min(e.salary),
+        max: max(e.salary),
+        mean: avg(e.salary)
+      }
+    case Repo.one(query) do
+      nil -> {:error, :not_found}
+      metrics ->
+        currency_code =
+          Exercise.Countries.preload(Exercise.Countries.get_country!(country_id))
+          .currency.code
+        metrics = update_in(metrics, [:mean], &Decimal.round(&1, DecimalUtils.num_digits()))
+        result = Map.put(metrics, :currency_code, currency_code)
+        {:ok, result}
+    end
+
+    # case get_all_by_country_id(country_id) do
+    #   [] -> {:error, :not_found}
+    #   [head | tail] = employees ->
+    #     {min, max, sum} = tail
+    #       #use first elem as intial Enum acc values
+    #       |> Enum.reduce({head.salary, head.salary, head.salary},
+    #       fn e, {min, max, sum} ->
+    #         salary = e.salary
+    #         {
+    #           # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
+    #           min < salary && min || salary,
+    #           max > salary && max || salary,
+    #           Decimal.add(sum, salary)
+    #         }
+    #       end)
+    #     mean = Decimal.div sum, Decimal.new(Enum.count(employees))
+    #     code = preload(head).country.currency.code
+    #     {:ok, %{
+    #       min: min,
+    #       max: max,
+    #       mean: mean,
+    #       currency_code: code
+    #     }}
+    # end
+  end
+
 end

@@ -13,7 +13,6 @@ defmodule ExerciseWeb.EmployeeController do
 
   def create(conn, %{"employee" => employee_params}) do
     with {:ok, %Employee{} = employee} <- Employees.create_employee(employee_params) do
-      employee = employee |> Exercise.Repo.preload(:country)
       conn
       |> put_status(:created)
       |> put_resp_header("location", ~p"/api/employees/#{employee}")

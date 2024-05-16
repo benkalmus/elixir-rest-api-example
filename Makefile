@@ -1,10 +1,8 @@
 include vsn.mk
 
-PROJECT_NAME="chat_app"
+PROJECT_NAME="be_exercise"
 
 # TODO commands:
-# run migrations 
-# run seed script
 # benchmark
 # show help/usage
 
@@ -66,7 +64,7 @@ test: docker-stop
 	docker compose -f priv/docker/docker-compose-test.yml down
 
 # runs mix test but exits on first error, so we can only see one test failure at a time.
-.PHONY: t
+.PHONY: test-one
 test-one: 
 	$(MAKE) MAKE_TEST_OPTS="--max-failures 1" test 
 

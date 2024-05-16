@@ -2,8 +2,10 @@ defmodule Exercise.EmployeesTest do
   use Exercise.DataCase
   alias Exercise.Employees
   alias Exercise.Fixtures
+  alias Exercise.DecimalUtils, as: D
 
   setup do
+    Decimal.Context.set(%{ Decimal.Context.get() | precision: 16})
     currency = Fixtures.currency_fixture()
     country = Fixtures.country_fixture(%{currency_id: currency.id})
     {:ok, %{country: country}}
@@ -21,7 +23,7 @@ defmodule Exercise.EmployeesTest do
     @valid_attrs %{
       full_name: "some full_name",
       job_title: "some job_title",
-      salary: Decimal.new(42),
+      salary: D.new_decimal(42),
       country_id: :todo
     }
 
@@ -45,7 +47,7 @@ defmodule Exercise.EmployeesTest do
       assert {:ok, %Employee{} = employee} = Employees.create_employee(Map.put(@valid_attrs, :country_id, country.id))
       assert employee.full_name == "some full_name"
       assert employee.job_title == "some job_title"
-      assert employee.salary == Decimal.new(42)
+      assert employee.salary == D.new_decimal(42)
       assert employee.country_id == country.id
     end
 
@@ -55,12 +57,12 @@ defmodule Exercise.EmployeesTest do
 
     test "update_employee/2 with valid data updates the employee", %{country: country} do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
-      update_attrs = %{full_name: "some updated full_name", job_title: "some updated job_title", salary: 43}
+      update_attrs = %{full_name: "some updated full_name", job_title: "some updated job_title", salary: D.new_decimal(43)}
 
       assert {:ok, %Employee{} = employee} = Employees.update_employee(employee, update_attrs)
       assert employee.full_name == "some updated full_name"
       assert employee.job_title == "some updated job_title"
-      assert employee.salary == Decimal.new(43)
+      assert employee.salary == D.new_decimal(43)
       assert employee.country_id == country.id
     end
 
@@ -87,7 +89,7 @@ defmodule Exercise.EmployeesTest do
     end
 
     test "create_employee/1 with an invalid salary returns error changeset", %{country: country} do
-      attr = %{@valid_attrs | country_id: country.id, salary: Decimal.new(-100)}
+      attr = %{@valid_attrs | country_id: country.id, salary: D.new_decimal(-100)}
       assert {:error, %Ecto.Changeset{}} = Employees.create_employee(attr)
     end
 
@@ -95,8 +97,8 @@ defmodule Exercise.EmployeesTest do
 
     test "batch_write/1 with a valid list of employees creates them", %{country: country} do
       employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")}
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: D.new_decimal(50000)},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: D.new_decimal(60000)}
       ]
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       assert length(successful) == length(employee_batches)
@@ -105,8 +107,8 @@ defmodule Exercise.EmployeesTest do
 
     test "batch_write_unsafe/1 with a valid list of employees creates them", %{country: country} do
       employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")}
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: D.new_decimal(50000)},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: D.new_decimal(60000)}
       ]
       assert {:ok, valid_attr, []} = Employees.batch_write_unsafe(employee_batches)
       assert length(valid_attr) == length(employee_batches)
@@ -131,15 +133,16 @@ defmodule Exercise.EmployeesTest do
         })
       assert another_country.id != country.id # prove another country was created
       employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")},
-        %{full_name: "Billy Jones", job_title: "Manager", country_id: another_country.id, salary: Decimal.new("100000.00")}
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: D.new_decimal(50000)},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: D.new_decimal(60000)},
+        %{full_name: "Billy Jones", job_title: "Manager", country_id: another_country.id, salary: D.new_decimal(100000)}
       ]
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       # filter out successfully inserted employees by country.id
       successful = Enum.filter(successful, fn e -> e.country_id == country.id end)
       # run query
       employees = Employees.get_all_by_country_id(country.id)
+      # Assert employees were written to DB, retrieve with preload and compare them
       assert_employee_lists(employees, successful)
     end
 
@@ -151,9 +154,9 @@ defmodule Exercise.EmployeesTest do
     test "get_all_by_job_title/1 should return all employees given a valid job title", %{country: country} do
       job_title = "Manager"
       employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: Decimal.new("50000.00")},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: Decimal.new("60000.00")},
-        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: Decimal.new("100000.00")}
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: D.new_decimal(50000)},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: D.new_decimal(60000)},
+        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: D.new_decimal(100000)}
       ]
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       # filter out successfully inserted employees by job_title
@@ -168,12 +171,37 @@ defmodule Exercise.EmployeesTest do
       assert [] = Employees.get_all_by_job_title("This job title shouldn't exist")
     end
 
+    test "salary_metrics_by_country/1 should return min, max, avg salary for all employees in a country", %{country: country} do
+      employee_batches =  [
+        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: D.new_decimal(50000)},
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: D.new_decimal(60000)},
+        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: D.new_decimal(100000)}
+      ]
+      Employees.batch_write(employee_batches)
+
+      # run query
+      assert {:ok, result} = Employees.salary_metrics_by_country(country.id)
+      code = country.currency.code
+      min = D.new_decimal(50000)
+      max = D.new_decimal(100000)
+      mean = D.new_decimal(70000)
+      assert %{
+        min: ^min,
+        max: ^max,
+        mean: ^mean,
+        currency_code: ^code
+        } = result
+
+    end
 
     #todo
       # valid and invalid lists
-    #
 
-    # ensure employees were written to DB, retrieve with preload and compare them
+
+    # ================================================
+    ## Test Helper functions
+
+    # asserts two %Employee{} lists are identical. Preloads each employee
     defp assert_employee_lists(expected, actual) do
       expected =
         expected
