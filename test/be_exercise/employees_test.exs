@@ -102,6 +102,15 @@ defmodule Exercise.EmployeesTest do
       assert_employee_lists Employees.list_employees(), successful
     end
 
+    test "batch_write/1 with invalid employees reports them", %{employees: employee_batches} do
+      invalid_employee = %{full_name: "John Smith", job_title: "Developer", country_id: -1, salary: 50000}
+
+      assert {:ok, _successful, invalid} = Employees.batch_write([invalid_employee | employee_batches])
+
+      assert [{attr, %Ecto.Changeset{} = changeset}] = invalid
+      assert changeset.valid? == false
+    end
+
     test "batch_write_unsafe/1 with a valid list of employees creates them", %{employees: employee_batches} do
       assert %{
         valid_attr: valid_attr,
@@ -131,6 +140,8 @@ defmodule Exercise.EmployeesTest do
       end)
     end
 
+    ##todo add invalid test for unsafe batch writes
+
     ## Setup
     defp employee_batches(%{country: country}) do
       employee_batches =  [
@@ -157,7 +168,7 @@ defmodule Exercise.EmployeesTest do
     end
 
     test "get_all_by_country_id/1 should return no employees given a country with no employees", %{employees: employee_batches} do
-      assert {:ok, successful, []} = Employees.batch_write(employee_batches)
+      assert {:ok, _successful, []} = Employees.batch_write(employee_batches)
       assert [] = Employees.get_all_by_country_id(-1)
     end
 
