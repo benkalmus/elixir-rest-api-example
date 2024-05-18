@@ -7,7 +7,7 @@ defmodule Exercise.Employees do
   require Logger
   alias Exercise.Repo
   alias Exercise.Employees.Employee
-  alias Exercise.DecimalUtils
+  alias Exercise.Countries
 
   @doc """
   Returns the list of employees.
@@ -213,13 +213,23 @@ defmodule Exercise.Employees do
   end
 
   @doc """
-    Returns salary metrics for a given country id.
+    Returns salary metrics for a given country id, in the currency code of the country given.
+    Salary metrics include: min, max, mean average.
+
+    ## Examples
+    iex> salary_metrics_by_country(1)
+    {:ok, %{
+      min: 10000,
+      max: 20000,
+      mean: 15000,
+      currency_code: "USD"
+    }}
   """
   @spec salary_metrics_by_country(integer()) ::
     {:ok, %{
-      min: Decimal.t(),
-      max: Decimal.t(),
-      mean: Decimal.t(),
+      min: integer(),
+      max: integer(),
+      mean: integer(),
       currency_code: String.t()
     }}
     | {:error, :not_found}
@@ -230,16 +240,19 @@ defmodule Exercise.Employees do
       select: %{
         min: min(e.salary),
         max: max(e.salary),
-        mean: avg(e.salary)
+        mean: avg(e.salary),
+        count: count(e)
       }
     case Repo.one(query) do
       nil ->
         {:error, :not_found}
       metrics ->
         currency_code =
-          Exercise.Countries.preload(Exercise.Countries.get_country!(country_id))
-          .currency.code
-        metrics = update_in(metrics, [:mean], &Decimal.round(&1, DecimalUtils.num_digits()))
+          Countries.preload(Countries.get_country!(country_id)).currency.code
+
+        # PostgreSQL uses Decimal to calculate average, convert back to integer and update map
+        mean_int = Decimal.to_integer(Decimal.round(metrics[:mean], 0))
+        metrics = %{metrics | mean: mean_int }
         result = Map.put(metrics, :currency_code, currency_code)
         {:ok, result}
     end
@@ -261,11 +274,11 @@ defmodule Exercise.Employees do
               # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
               min < salary && min || salary,
               max > salary && max || salary,
-              Decimal.add(sum, salary)
+              sum + salary
             }
           end)
 
-        mean = Decimal.div sum, Decimal.new(Enum.count(employees))
+        mean = sum / Enum.count(employees)
         code = preload(head).country.currency.code
 
         {:ok, %{

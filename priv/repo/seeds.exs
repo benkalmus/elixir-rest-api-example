@@ -213,7 +213,7 @@ defmodule Exercise.Seed do
 
   #Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000
   defp gen_salary() do
-    Decimal.new((5 * :rand.uniform(30)) * 1_000)
+    (5 * :rand.uniform(30)) * 1_000
   end
 
   # performs a batched write on the DB using Employee API

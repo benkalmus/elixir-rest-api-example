@@ -42,7 +42,9 @@ It follows the architecture of a standard, generated phoenix project.
   - [x] Used phoenix generator
     - `mix phx.gen.json Employees Employee employees full_name:string job_title:string salary:integer country:references:countries`
   - [x] add country_id foreign key 
-  - [] Is integer the right type to use for salary?
+  - [x] Is integer the right type to use for salary?
+    - converted to Decimal type
+    -  switched back to using an integer for salary, due to growing complexity of the application, currently outside the scope 
 
 
 - [x] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
@@ -62,12 +64,14 @@ It follows the architecture of a standard, generated phoenix project.
     - [x] Employee
       - [x] preload
         - update view to show currency in which the salary is paid!
-      - [] query
+      - [x] query
   - [] 
 
 - [] **Metrics** endpoints
-  - [] fetch salary stats given country (min, max, mean)
+  - [x] fetch salary stats given country (min, max, mean)
   - [] fetch salary stats given job title (mean)
+
+- [] Complete all TODOs
 
 - [] **Benchmarking**. 
   - [] How does it scale under increasing vars such as Num Records in DB, concurrent connections...
@@ -85,6 +89,7 @@ It follows the architecture of a standard, generated phoenix project.
     - []
   - [] Document API. Usage and possible returns
   - [] seed.exs script usage
+    - added help command and module doc
 
 ## Exploring optimizations and Design decisions
 
@@ -136,8 +141,8 @@ It follows the architecture of a standard, generated phoenix project.
     * **Decision**: The answer depends entirely on the purpose of this application. If performance of the metrics endpoint is the ultimate concern then converting salaries on writes will be more suitable, especially if this application will reach an external Currency conversion service in the future. However this comes at a cost, as mentioned above, and so for data accuracy and consistency reasons I decide to store Employee Salaries in their local currency. 
 
 - **Metrics endpoints**:
-  - per_country_salary(country) -> {currency_code_, average, min, max}
-    - 
+  - [x] per_country_salary(country) -> {currency_code_, average, min, max}
+    - Performing min, max and average on the database
   - per_title_salary(job_title, currency // "USD") -> average
     - currency conversion!
 

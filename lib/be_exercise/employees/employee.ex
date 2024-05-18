@@ -5,7 +5,7 @@ defmodule Exercise.Employees.Employee do
   schema "employees" do
     field :full_name, :string
     field :job_title, :string
-    field :salary, :decimal
+    field :salary,    :integer
     belongs_to :country, Exercise.Countries.Country, foreign_key: :country_id
 
     timestamps()
@@ -16,7 +16,7 @@ defmodule Exercise.Employees.Employee do
     employee
     |> cast(attrs, [:full_name, :job_title, :salary, :country_id])
     |> validate_required([:full_name, :job_title, :salary, :country_id])
-    |> validate_number(:salary, greater_than: Decimal.new(0), message: "must be greater than 0")
+    |> validate_number(:salary, greater_than: 0, message: "must be greater than 0")
     |> foreign_key_constraint(:country_id)
   end
 end

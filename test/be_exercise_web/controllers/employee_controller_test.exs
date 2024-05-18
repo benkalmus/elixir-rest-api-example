@@ -2,7 +2,6 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   use ExerciseWeb.ConnCase
   alias Exercise.Employees.Employee
   alias Exercise.Fixtures
-  alias Exercise.DecimalUtils, as: D
 
   @create_attrs %{
     full_name: "some full_name",
@@ -41,7 +40,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
         "id" => ^id,
         "full_name" => "some full_name",
         "job_title" => "some job_title",
-        "salary" => "42.0000",
+        "salary" => 42,
         "country_id" => ^country_id,
         "currency_code" => ^currency_code
       }] = json_response(conn, 200)["data"]
@@ -59,7 +58,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
                "id" => ^id,
                "full_name" => "some full_name",
                "job_title" => "some job_title",
-               "salary" => "42.0000"
+               "salary" => 42
              } = json_response(conn, 200)["data"]
     end
 
@@ -81,7 +80,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       assert [%{
         "full_name" => "John Smith",
         "job_title" => "Developer",
-        "salary" => "50000.0000",
+        "salary" => 50000,
         "country_id" => ^country_id
       }] = response["successful"]
 
@@ -107,7 +106,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       assert %{
                "id" => employee.id,
                "full_name" => employee.full_name,
-               "salary" => D.to_str(employee.salary),
+               "salary" => employee.salary,
                "job_title" => employee.job_title,
                "country_id" => employee.country.id,
                "currency_code" => employee.country.currency.code
@@ -134,7 +133,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
                "id" => id,
                "full_name" => "some updated full_name",
                "job_title" => "some updated job_title",
-               "salary" => "43.0000",
+               "salary" => 43,
                "country_id" => employee.country.id,
                "currency_code" => employee.country.currency.code
              } == json_response(conn, 200)["data"]

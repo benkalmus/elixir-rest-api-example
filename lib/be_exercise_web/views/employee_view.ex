@@ -1,6 +1,6 @@
 defmodule ExerciseWeb.EmployeeView do
   use ExerciseWeb, :view
-  alias Exercise.{Employees, DecimalUtils}
+  alias Exercise.Employees
   alias Exercise.Employees.Employee
 
   @doc """
@@ -43,7 +43,7 @@ defmodule ExerciseWeb.EmployeeView do
       id: employee.id,
       full_name: employee.full_name,
       job_title: employee.job_title,
-      salary: DecimalUtils.to_str(employee.salary),
+      salary: employee.salary,
       country_id: employee.country.id,
       currency_code: employee.country.currency.code
     }
