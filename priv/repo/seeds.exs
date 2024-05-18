@@ -145,8 +145,8 @@ defmodule Exercise.Seed do
     IO.puts("\nInserting employees #{num_employees}\n")
     # read first and last names file
     first_names = parse_text_file(@first_names_file)
-    last_names = parse_text_file(@first_names_file)
-    job_titles = parse_text_file(@first_names_file)
+    last_names = parse_text_file(@last_names_file)
+    job_titles = parse_text_file(@job_titles_file)
 
     #take subset of N job_titles
     job_titles = Enum.take_random(job_titles, @job_title_subset_num)
