@@ -37,6 +37,18 @@ defmodule ExerciseWeb.EmployeeView do
     %{successful: render_successful, failed: errors}
   end
 
+  def display_metrics(%{min: min, max: max, mean: mean, currency_code: code}) do
+    %{
+      min: min,
+      max: max,
+      mean: mean,
+      currency_code: code,
+    }
+  end
+
+  ## ====================================================================
+  ## Internal Functions
+
   defp data(%Employee{} = employee) do
     employee = Employees.preload(employee)
     %{

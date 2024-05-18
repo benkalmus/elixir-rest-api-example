@@ -59,6 +59,9 @@ defmodule ExerciseWeb do
       def handle_errors(conn, %{reason: %{message: message}}) do
         conn |> json(%{errors: message}) |> halt()
       end
+      def handle_errors(conn, error_map) do     ## TODO research idiomatic method of returning errors in Elixir
+        conn |> json(%{errors: "#{inspect error_map}"}) |> halt()
+      end
     end
   end
 

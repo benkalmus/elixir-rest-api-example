@@ -107,7 +107,7 @@ defmodule Exercise.EmployeesTest do
 
       assert {:ok, _successful, invalid} = Employees.batch_write([invalid_employee | employee_batches])
 
-      assert [{attr, %Ecto.Changeset{} = changeset}] = invalid
+      assert [{^invalid_employee, %Ecto.Changeset{} = changeset}] = invalid
       assert changeset.valid? == false
     end
 

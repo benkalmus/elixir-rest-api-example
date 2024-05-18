@@ -8,11 +8,17 @@ defmodule ExerciseWeb.Router do
   scope "/api", ExerciseWeb do
     pipe_through :api
 
+    # Currencies
+    get "/currencies/code/:code", CurrencyController, :get_by_code
+
+    # Employees
+    post "/employees/batch_write", EmployeeController, :batch_write
+    get "/employees/metrics_by_country", EmployeeController, :metrics_by_country
+
+    # Resources
     resources "/currencies", CurrencyController
     resources "/countries", CountryController
     resources "/employees", EmployeeController
-    get "/currencies/code/:code", CurrencyController, :get_by_code
-    post "/employees/batch_write", EmployeeController, :batch_write
   end
 
   # Enables LiveDashboard only for development

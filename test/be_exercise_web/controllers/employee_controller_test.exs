@@ -1,6 +1,7 @@
 defmodule ExerciseWeb.EmployeeControllerTest do
   use ExerciseWeb.ConnCase
   alias Exercise.Employees.Employee
+  alias Exercise.Employees
   alias Exercise.Fixtures
 
   @create_attrs %{
@@ -157,6 +158,38 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       end
     end
   end
+require Logger
+  describe "employee_metrics" do
+    setup [:create_employees_for_metrics]
+
+    test "employee metrics by country id returns a json response containing valid metrics", %{conn: conn, country: country} do
+      min = 50000
+      max = 100000
+      mean = 70000
+      code = country.currency.code
+
+      conn = get(conn, Routes.employee_path(conn, :metrics_by_country, country_id: country.id))
+      assert %{
+        "min" => ^min,
+        "max" => ^max,
+        "mean" => ^mean,
+        "currency_code" => ^code
+             } = json_response(conn, 200)
+    end
+
+
+    test "employee metrics by invalid country id returns an error", %{conn: conn} do
+      conn = get(conn, Routes.employee_path(conn, :metrics_by_country, country_id: -1))
+
+      assert %{
+        "errors" => %{
+          "detail" => "Not Found"
+        }
+      } = json_response(conn, 404)
+    end
+
+
+  end
 
   defp create_employee(%{country: country}) do
     employee = Fixtures.employee_fixture(%{country_id: country.id})
@@ -167,5 +200,26 @@ defmodule ExerciseWeb.EmployeeControllerTest do
     Map.put(attrs, :country_id, id)
   end
 
+  defp create_employees_for_metrics(%{country: country}) do
+    another_currency = Fixtures.currency_fixture(%{code: "GBP", name: "British Pound Sterling"})
+    another_country = Fixtures.country_fixture(%{currency_id: another_currency.id, code: "GBP", name: "United Kingdom"})
+
+    # a mixture of employees with different countries and job titles
+    employee_batches =  [
+      %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
+      %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000},
+      %{full_name: "John Jackson", job_title: "Manager", country_id: country.id, salary: 100000},
+      %{full_name: "Billy Jones", job_title: "Developer", country_id: another_country.id, salary: 100000},
+      %{full_name: "Adam McCoy", job_title: "Manager", country_id: another_country.id, salary: 100000}
+    ]
+
+    Employees.batch_write(employee_batches)
+
+    %{
+      another_currency: another_currency,
+      another_country: another_country,
+      employees: employee_batches
+    }
+  end
 
 end

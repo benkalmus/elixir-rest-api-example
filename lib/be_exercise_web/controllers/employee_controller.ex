@@ -4,6 +4,8 @@ defmodule ExerciseWeb.EmployeeController do
   alias Exercise.Employees
   alias Exercise.Employees.Employee
 
+  require Logger
+
   action_fallback ExerciseWeb.FallbackController
 
   def index(conn, _params) do
@@ -44,5 +46,11 @@ defmodule ExerciseWeb.EmployeeController do
   def batch_write(conn, %{"employees" => employee_params} = _params) do
     {:ok, employees, changesets} = Employees.batch_write(employee_params)
     render(conn, :batch_result, %{successful: employees, failed: changesets})
+  end
+
+  def metrics_by_country(conn, %{"country_id" => country_id}) do
+    with {:ok, metrics} <- Employees.salary_metrics_by_country(country_id) do
+      render(conn, :display_metrics, metrics)
+    end
   end
 end
