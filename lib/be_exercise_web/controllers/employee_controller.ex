@@ -53,4 +53,10 @@ defmodule ExerciseWeb.EmployeeController do
       render(conn, :display_metrics, metrics)
     end
   end
+
+  def metrics_by_job_title(conn, %{"job_title" => job_title, "target_currency" => target_currency}) do
+    with {:ok, metrics} <- Employees.salary_metrics_by_job_title(job_title, target_currency) do
+      render(conn, :display_metrics, metrics)
+    end
+  end
 end

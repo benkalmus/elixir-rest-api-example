@@ -177,7 +177,6 @@ require Logger
              } = json_response(conn, 200)
     end
 
-
     test "employee metrics by invalid country id returns an error", %{conn: conn} do
       conn = get(conn, Routes.employee_path(conn, :metrics_by_country, country_id: -1))
 
@@ -188,6 +187,34 @@ require Logger
       } = json_response(conn, 404)
     end
 
+    test "employee metrics by job_title returns a json response containing valid metrics", %{conn: conn} do
+      target_currency = "USD"
+      employee_max = 100000   # employee with highest salary in GBP
+      job_title = "Manager"
+      # convert one of the other employees salary to target_currency
+      {:ok, max_in_usd} = Exercise.Services.CurrencyConverter.convert("GBP", target_currency, employee_max)
+      max = round(max_in_usd)
+      # calculate mean
+      mean = round((60000 + 100000 + max) / 3)
+
+      conn = get(conn, Routes.employee_path(conn, :metrics_by_job_title, job_title: job_title, target_currency: target_currency))
+      assert %{
+        "min" => 60000,
+        "max" => ^max,
+        "mean" => ^mean,
+        "currency_code" => ^target_currency
+             } = json_response(conn, 200)
+    end
+
+    test "employee metrics by invalid job_title returns an error", %{conn: conn} do
+      conn = get(conn, Routes.employee_path(conn, :metrics_by_job_title, job_title: "job_title", target_currency: "target_currency"))
+
+      assert %{
+        "errors" => %{
+          "detail" => "Not Found"
+        }
+      } = json_response(conn, 404)
+    end
 
   end
 

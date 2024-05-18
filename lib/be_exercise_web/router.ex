@@ -14,6 +14,7 @@ defmodule ExerciseWeb.Router do
     # Employees
     post "/employees/batch_write", EmployeeController, :batch_write
     get "/employees/metrics_by_country", EmployeeController, :metrics_by_country
+    get "/employees/metrics_by_job_title", EmployeeController, :metrics_by_job_title
 
     # Resources
     resources "/currencies", CurrencyController
