@@ -321,20 +321,13 @@ defmodule Exercise.Employees do
       attr_list
       |> Task.async_stream(fn attr ->
           case create_fun.(attr) do
-            {:ok, struct} -> struct
+            {:ok, struct} -> {:ok, struct}
             # on failure, return the attributes and changeset
             {:error, changeset} -> {attr, changeset}
           end
         end, max_concurrency: pool_size, on_timeout: :kill_task)
       # separate results into two lists: inserted structs and failed changesets
-      |> Enum.reduce({[],[]},
-        fn {:ok, {_attr, _changeset} = r}, {successes, failures} ->
-          {successes, [r | failures]};
-        {:ok, struct}, {successes, failures} ->
-          {[struct | successes], failures}
-        _, acc ->
-          acc
-        end)
+      |> Enum.reduce({[],[]}, &reduce_employee_schema_results/2)
 
     {valid_structs, invalid_changesets}
   end
@@ -361,36 +354,9 @@ defmodule Exercise.Employees do
         end
       end, max_concurrency: System.schedulers_online(), on_timeout: :kill_task)
 
-      |> Enum.reduce({[],[]}, fn
-        {:ok, {:ok, success}}, {s, f} ->
-            {[success | s], f};
-        {:ok, {:error, failed}}, {s, f} ->
-            {s, [failed | f]}
-        _, acc ->
-          acc     #task failed
-        end)
+      |> Enum.reduce({[],[]}, &reduce_employee_schema_results/2)
 
-    # generate datetime for timestamps suitable for PostgreSQL DB
-    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
-
-    # DB can refuse insert if chunks are too large
-    # limit number of params to max possible: 65535 / (parameters per attribute)
-    # div() rounds down and returns an integer
-    chunks =  div @postgres_max_params, Enum.count(hd(valid_attr))
-
-    insert_results =
-      valid_attr
-      |> Enum.chunk_every(chunks)
-      |> Enum.reduce([], fn chunk, acc ->
-        transaction_result = Repo.transaction(fn ->
-          Repo.insert_all(Employee, chunk,
-            # insert_all options:
-            placeholders: %{datetime: datetime},
-            on_conflict: :nothing   # skip if already exists
-          )
-        end)
-        [transaction_result | acc]
-      end)
+    insert_results = insert_all_in_batches(valid_attr)
     ## instead of handling transaction results, allow the caller to handle and interpret the results
 
     %{
@@ -398,6 +364,39 @@ defmodule Exercise.Employees do
       invalid_attr: invalid_attr_and_changeset,
       insert_results: insert_results
     }
+  end
+
+  defp insert_all_in_batches(attributes) do
+    # generate datetime for timestamps suitable for PostgreSQL DB
+    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+
+    # DB can refuse insert if chunks are too large
+    # limit number of params to max possible: 65535 / (parameters per attribute)
+    # div() rounds down and returns an integer
+    chunks =  div @postgres_max_params, Enum.count(hd(attributes))
+
+    attributes
+    |> Enum.chunk_every(chunks)
+    |> Enum.reduce([], fn chunk, acc ->
+      transaction_result = Repo.transaction(fn ->
+        Repo.insert_all(Employee, chunk,
+          # insert_all options:
+          placeholders: %{datetime: datetime},
+          on_conflict: :nothing   # skip if already exists
+        )
+      end)
+      [transaction_result | acc]
+    end)
+  end
+
+  defp reduce_employee_schema_results({:ok, {:ok, struct}}, {successes, failures}) do
+    {[struct | successes], failures}
+  end
+  defp reduce_employee_schema_results({:ok, {_attr, _changeset} = r}, {successes, failures}) do
+    {successes, [r | failures]};
+  end
+  defp reduce_employee_schema_results(_, acc) do
+    acc
   end
 
 end
