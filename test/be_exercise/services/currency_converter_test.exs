@@ -8,9 +8,25 @@ defmodule Exercise.Services.CurrencyConverterTest do
     test "converting from a less valuable to a more valuable currency results in a smaller amount" do
       amount = 100
 
-      {:ok, result} = Converter.convert("JPY", "GBP", amount)
+      assert {:ok, result} = Converter.convert("JPY", "GBP", amount)
 
       assert result < amount
+    end
+
+    test "converting from a more valuable to a less valuable currency results in a larger amount" do
+      amount = 100
+
+      assert {:ok, result} = Converter.convert("USD", "JPY", amount)
+
+      assert result > amount
+    end
+
+    test "converting to the same currency results in same amount" do
+      amount = 100
+
+      assert {:ok, result} = Converter.convert("USD", "USD", amount)
+
+      assert result == amount
     end
 
     test "when one of the currencies is unsupported we get an error tuple as a result" do

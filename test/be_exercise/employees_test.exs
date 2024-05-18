@@ -172,10 +172,13 @@ defmodule Exercise.EmployeesTest do
     end
 
     test "salary_metrics_by_country/1 should return min, max, avg salary for all employees in a country", %{country: country} do
+      another_country = Fixtures.country_fixture(%{currency_id: country.currency.id, code: "ZZZ", name: "another country"})
       employee_batches =  [
         %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: D.new_decimal(50000)},
         %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: D.new_decimal(60000)},
-        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: D.new_decimal(100000)}
+        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: D.new_decimal(100000)},
+        # add another country employee that should not be included in calculations
+        %{full_name: "AB", job_title: "ASD", country_id: another_country.id, salary: D.new_decimal(1000000)}
       ]
       Employees.batch_write(employee_batches)
 
@@ -191,7 +194,6 @@ defmodule Exercise.EmployeesTest do
         mean: ^mean,
         currency_code: ^code
         } = result
-
     end
 
     #todo

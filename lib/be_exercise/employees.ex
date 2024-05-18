@@ -204,7 +204,7 @@ defmodule Exercise.Employees do
     Repo.all(query)
   end
 
-  @spec get_all_by_country_id(String.t()) :: [%Employee{}] | []
+  @spec get_all_by_job_title(String.t()) :: [%Employee{}] | []
   def get_all_by_job_title(job_title) do
     query =
       from e in Employee,
@@ -212,10 +212,20 @@ defmodule Exercise.Employees do
     Repo.all(query)
   end
 
+  @doc """
+    Returns salary metrics for a given country id.
+  """
+  @spec salary_metrics_by_country(integer()) ::
+    {:ok, %{
+      min: Decimal.t(),
+      max: Decimal.t(),
+      mean: Decimal.t(),
+      currency_code: String.t()
+    }}
+    | {:error, :not_found}
   def salary_metrics_by_country(country_id) do
     query =
       from e in Employee,
-      # join: c in Exercise.Countries.Country, on: e.country_id == c.id,
       where: e.country_id == ^country_id,
       select: %{
         min: min(e.salary),
@@ -223,7 +233,8 @@ defmodule Exercise.Employees do
         mean: avg(e.salary)
       }
     case Repo.one(query) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
       metrics ->
         currency_code =
           Exercise.Countries.preload(Exercise.Countries.get_country!(country_id))
@@ -232,31 +243,38 @@ defmodule Exercise.Employees do
         result = Map.put(metrics, :currency_code, currency_code)
         {:ok, result}
     end
+  end
 
-    # case get_all_by_country_id(country_id) do
-    #   [] -> {:error, :not_found}
-    #   [head | tail] = employees ->
-    #     {min, max, sum} = tail
-    #       #use first elem as intial Enum acc values
-    #       |> Enum.reduce({head.salary, head.salary, head.salary},
-    #       fn e, {min, max, sum} ->
-    #         salary = e.salary
-    #         {
-    #           # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
-    #           min < salary && min || salary,
-    #           max > salary && max || salary,
-    #           Decimal.add(sum, salary)
-    #         }
-    #       end)
-    #     mean = Decimal.div sum, Decimal.new(Enum.count(employees))
-    #     code = preload(head).country.currency.code
-    #     {:ok, %{
-    #       min: min,
-    #       max: max,
-    #       mean: mean,
-    #       currency_code: code
-    #     }}
-    # end
+  ## TODO benchmark performance vs DB query
+  def salary_metrics_by_country_internal(country_id) do
+    case get_all_by_country_id(country_id) do
+      [] ->
+        {:error, :not_found}
+
+      [head | tail] = employees ->
+        {min, max, sum} = tail
+          #use first elem as intial Enum acc values
+          |> Enum.reduce({head.salary, head.salary, head.salary},
+          fn e, {min, max, sum} ->
+            salary = e.salary
+            {
+              # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
+              min < salary && min || salary,
+              max > salary && max || salary,
+              Decimal.add(sum, salary)
+            }
+          end)
+
+        mean = Decimal.div sum, Decimal.new(Enum.count(employees))
+        code = preload(head).country.currency.code
+
+        {:ok, %{
+          min: min,
+          max: max,
+          mean: mean,
+          currency_code: code
+        }}
+    end
   end
 
 end

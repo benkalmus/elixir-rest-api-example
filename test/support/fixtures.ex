@@ -17,7 +17,7 @@ defmodule Exercise.Fixtures do
     {:ok, currency} =
       attrs
       |> Enum.into(%{
-        code: "ABC",
+        code: "USD",
         name: "some currency",
         symbol: "$"
         })
