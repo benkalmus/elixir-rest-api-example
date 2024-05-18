@@ -1,7 +1,23 @@
 defmodule Exercise.EmployeesTest do
   use Exercise.DataCase
+
+  alias Exercise.Services.CurrencyConverter
+  alias Exercise.Employees.Employee
   alias Exercise.Employees
   alias Exercise.Fixtures
+
+  @invalid_attrs %{
+    full_name: nil,
+    job_title: nil,
+    salary: nil,
+    country_id: nil
+  }
+  @valid_attrs %{
+    full_name: "some full_name",
+    job_title: "some job_title",
+    salary: 42,
+    country_id: :todo
+  }
 
   setup do
     currency = Fixtures.currency_fixture()
@@ -9,22 +25,7 @@ defmodule Exercise.EmployeesTest do
     {:ok, %{country: country}}
   end
 
-  describe "employees" do
-    alias Exercise.Employees.Employee
-
-    @invalid_attrs %{
-      full_name: nil,
-      job_title: nil,
-      salary: nil,
-      country_id: nil
-    }
-    @valid_attrs %{
-      full_name: "some full_name",
-      job_title: "some job_title",
-      salary: 42,
-      country_id: :todo
-    }
-
+  describe "employees CRUD tests" do
     test "list_employees/0 returns all employees", %{country: country} do
       employee = Fixtures.employee_fixture(%{country_id: country.id})
       list =
@@ -90,24 +91,18 @@ defmodule Exercise.EmployeesTest do
       attr = %{@valid_attrs | country_id: country.id, salary: -100}
       assert {:error, %Ecto.Changeset{}} = Employees.create_employee(attr)
     end
+  end
 
-    #updating employee's country, should require updated salary field
+  describe "batch write tests" do
+    setup [:employee_batches]
 
-    test "batch_write/1 with a valid list of employees creates them", %{country: country} do
-      employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000}
-      ]
+    test "batch_write/1 with a valid list of employees creates them", %{employees: employee_batches} do
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       assert length(successful) == length(employee_batches)
       assert_employee_lists Employees.list_employees(), successful
     end
 
-    test "batch_write_unsafe/1 with a valid list of employees creates them", %{country: country} do
-      employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000}
-      ]
+    test "batch_write_unsafe/1 with a valid list of employees creates them", %{employees: employee_batches} do
       assert %{
         valid_attr: valid_attr,
         invalid_attr: [],
@@ -136,18 +131,22 @@ defmodule Exercise.EmployeesTest do
       end)
     end
 
-    test "get_all_by_country_id/1 should return all employees given a valid country id", %{country: country} do
-      another_country = Fixtures.country_fixture(%{
-        currency_id: country.currency.id,
-        code: "ZZZ",
-        name: "another country"
-        })
-      assert another_country.id != country.id # prove another country was created
+    ## Setup
+    defp employee_batches(%{country: country}) do
       employee_batches =  [
         %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000},
-        %{full_name: "Billy Jones", job_title: "Manager", country_id: another_country.id, salary: 100000}
+        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000}
       ]
+
+      %{employees: employee_batches}
+    end
+  end
+
+
+  describe  "employee queries tests" do
+    setup [:valid_employee_batches]
+
+    test "get_all_by_country_id/1 should return all employees given a valid country id", %{country: country, employees: employee_batches} do
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       # filter out successfully inserted employees by country.id
       successful = Enum.filter(successful, fn e -> e.country_id == country.id end)
@@ -157,18 +156,14 @@ defmodule Exercise.EmployeesTest do
       assert_employee_lists(employees, successful)
     end
 
-    test "get_all_by_country_id/1 should return no employees given a country with no employees", %{country: country} do
-      Fixtures.employee_fixture(%{country_id: country.id})
+    test "get_all_by_country_id/1 should return no employees given a country with no employees", %{employees: employee_batches} do
+      assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       assert [] = Employees.get_all_by_country_id(-1)
     end
 
-    test "get_all_by_job_title/1 should return all employees given a valid job title", %{country: country} do
+    test "get_all_by_job_title/1 should return all employees given a valid job title", %{employees: employee_batches} do
       job_title = "Manager"
-      employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000},
-        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: 100000}
-      ]
+
       assert {:ok, successful, []} = Employees.batch_write(employee_batches)
       # filter out successfully inserted employees by job_title
       successful = Enum.filter(successful, fn e -> e.job_title == job_title end)
@@ -181,24 +176,22 @@ defmodule Exercise.EmployeesTest do
       Fixtures.employee_fixture(%{country_id: country.id})
       assert [] = Employees.get_all_by_job_title("This job title shouldn't exist")
     end
+  end
 
-    test "salary_metrics_by_country/1 should return min, max, avg salary for all employees in a country", %{country: country} do
-      another_country = Fixtures.country_fixture(%{currency_id: country.currency.id, code: "ZZZ", name: "another country"})
-      employee_batches =  [
-        %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
-        %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000},
-        %{full_name: "Billy Jones", job_title: "Manager", country_id: country.id, salary: 100000},
-        # add another country employee that should not be included in calculations
-        %{full_name: "AB", job_title: "ASD", country_id: another_country.id, salary: 1000000}
-      ]
+  describe "salary metrics tests" do
+    setup [:valid_employee_batches]
+
+    test "salary_metrics_by_country/1 should return min, max, avg salary for all employees in a country", %{country: country, employees: employee_batches} do
+      min = 50000
+      max = 100000
+      mean = 70000
+      code = country.currency.code
+
       Employees.batch_write(employee_batches)
 
       # run query
       assert {:ok, result} = Employees.salary_metrics_by_country(country.id)
-      code = country.currency.code
-      min = 50000
-      max = 100000
-      mean = 70000
+
       assert %{
         min: ^min,
         max: ^max,
@@ -207,25 +200,66 @@ defmodule Exercise.EmployeesTest do
         } = result
     end
 
-    #todo
-      # valid and invalid lists
+    test "salary_metrics_by_jobtitle/1 should return salary metrics for employees with given jobtitle", %{employees: employee_batches} do
+      target_currency = "USD"
+      employee_max = 100000   # employee with highest salary in GBP
+      job_title = "Manager"
 
+      Employees.batch_write(employee_batches)
+      # run query
+      assert {:ok, result} = Employees.salary_metrics_by_job_title(job_title, target_currency)
 
-    # ================================================
-    ## Test Helper functions
+      # convert one of the other employees salary to target_currency
+      {:ok, max_in_usd} = CurrencyConverter.convert("GBP", target_currency, employee_max)
+      max = round(max_in_usd)
+      # calculate mean
+      mean = round((60000 + 100000 + max) / 3)
 
-    # asserts two %Employee{} lists are identical. Preloads each employee
-    defp assert_employee_lists(expected, actual) do
-      expected =
-        expected
-        |> Enum.map(&Employees.preload(&1))
-        |> Enum.sort()
-      actual =
-        actual
-        |> Enum.map(&Employees.preload(&1))
-        |> Enum.sort()
-
-      assert expected == actual
+      assert %{
+        #precalculated values:
+        min: 60000,
+        max: ^max,
+        mean: ^mean,
+        currency_code: ^target_currency
+        } = result
     end
+
+  end
+
+  # ================================================
+  ## Test Helper functions
+
+  # asserts two %Employee{} lists are identical. Preloads each employee
+  defp assert_employee_lists(expected, actual) do
+    expected =
+      expected
+      |> Enum.map(&Employees.preload(&1))
+      |> Enum.sort()
+    actual =
+      actual
+      |> Enum.map(&Employees.preload(&1))
+      |> Enum.sort()
+
+    assert expected == actual
+  end
+
+  defp valid_employee_batches(%{country: country}) do
+    another_currency = Fixtures.currency_fixture(%{code: "GBP", name: "British Pound Sterling"})
+    another_country = Fixtures.country_fixture(%{currency_id: another_currency.id, code: "GBP", name: "United Kingdom"})
+
+    # a mixture of employees with different countries and job titles
+    employee_batches =  [
+      %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
+      %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000},
+      %{full_name: "John Jackson", job_title: "Manager", country_id: country.id, salary: 100000},
+      %{full_name: "Billy Jones", job_title: "Developer", country_id: another_country.id, salary: 100000},
+      %{full_name: "Adam McCoy", job_title: "Manager", country_id: another_country.id, salary: 100000}
+    ]
+
+    %{
+      another_currency: another_currency,
+      another_country: another_country,
+      employees: employee_batches
+    }
   end
 end

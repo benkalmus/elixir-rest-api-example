@@ -156,6 +156,14 @@ defmodule Exercise.Employees do
     Repo.preload(employee, [:country, country: :currency])
   end
 
+  @doc """
+  Returns all employees for a given country id.
+
+  ## Examples
+
+    iex> get_all_by_country_id(1)
+    [%Employee{full_name: "John Johnson", country_id: 1, ...}]
+  """
   @spec get_all_by_country_id(integer()) :: [%Employee{}] | []
   def get_all_by_country_id(country_id) do
     query =
@@ -164,6 +172,14 @@ defmodule Exercise.Employees do
     Repo.all(query)
   end
 
+  @doc """
+  Returns all employees for a given job title.
+
+  ## Examples
+
+    iex> get_all_by_job_title("Developer")
+    [%Employee{full_name: "John Johnson", job_title: "Developer", ...}]
+  """
   @spec get_all_by_job_title(String.t()) :: [%Employee{}] | []
   def get_all_by_job_title(job_title) do
     query =
@@ -250,6 +266,49 @@ defmodule Exercise.Employees do
     end
   end
 
+
+  def salary_metrics_by_job_title(job_title, target_currency \\ "USD") do
+    query =
+      from e in Employee,
+      # join: country in assoc(e, :country),
+      join: country in Exercise.Countries.Country, on: country.id == e.country_id,
+      join: currency in Exercise.Countries.Currency, on: country.currency_id == currency.id,
+      # join: currency in assoc(country :currency),
+      where: e.job_title == ^job_title,
+      preload: [country: {country, currency:  currency}],
+      select: %{
+        employee: e,
+        currency: currency.code
+      }
+
+    result = Repo.all(query)
+
+    final  =
+      result
+      #use first elem as intial Enum acc values
+      |> Enum.reduce({nil, nil, 0},
+      fn e, {min, max, sum} ->
+        salary = e[:employee].salary
+        currency = e[:currency]
+        {:ok, salary_usd} = Exercise.Services.CurrencyConverter.convert(currency, target_currency, salary)
+        {
+          # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
+          min && min < salary_usd && min || salary_usd,
+          max && max > salary_usd && max || salary_usd,
+          sum + salary_usd
+        }
+      end)
+    {min, max, sum} = final
+    mean = round(sum / Enum.count(result))
+
+    {:ok, %{
+      min: round(min),
+      max: round(max),
+      mean: round(mean),
+      currency_code: target_currency
+    }}
+  end
+
   ## ==================================================================
   ## Internal functions
 
@@ -295,7 +354,7 @@ defmodule Exercise.Employees do
       |> Task.async_stream(fn attr ->
         c = Employee.changeset(%Employee{}, attr)
 
-        new_attr = date_placeholders |> Enum.into(attr)
+        new_attr = Enum.into(date_placeholders, attr)
         case c.valid? do
           true -> {:ok, new_attr}
           false -> {:error, {attr, c}}

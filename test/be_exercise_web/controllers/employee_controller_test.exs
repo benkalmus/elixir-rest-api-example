@@ -158,7 +158,6 @@ defmodule ExerciseWeb.EmployeeControllerTest do
     end
   end
 
-
   defp create_employee(%{country: country}) do
     employee = Fixtures.employee_fixture(%{country_id: country.id})
     %{employee: employee}
@@ -167,4 +166,6 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   defp employee_attr(attrs, %{id: id} = _country) do
     Map.put(attrs, :country_id, id)
   end
+
+
 end
