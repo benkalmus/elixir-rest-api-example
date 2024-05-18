@@ -211,6 +211,14 @@ defmodule Exercise.EmployeesTest do
         } = result
     end
 
+
+    test "salary_metrics_by_country/1 should return error if country has no employees", %{employees: employee_batches} do
+      Employees.batch_write(employee_batches)
+
+      # run query
+      assert {:error, :not_found} = Employees.salary_metrics_by_country(-1)
+    end
+
     test "salary_metrics_by_jobtitle/1 should return salary metrics for employees with given jobtitle", %{employees: employee_batches} do
       target_currency = "USD"
       employee_max = 100000   # employee with highest salary in GBP
@@ -233,6 +241,13 @@ defmodule Exercise.EmployeesTest do
         mean: ^mean,
         currency_code: ^target_currency
         } = result
+    end
+
+    test "salary_metrics_by_jobtitle/1 should return error if job_title has no employee", %{employees: employee_batches} do
+      Employees.batch_write(employee_batches)
+
+      # run query
+      assert {:error, :not_found} = Employees.salary_metrics_by_job_title("This job title shouldn't exist", "USD")
     end
 
   end

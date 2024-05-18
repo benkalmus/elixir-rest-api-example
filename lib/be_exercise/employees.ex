@@ -219,10 +219,11 @@ defmodule Exercise.Employees do
         mean: avg(e.salary),
         count: count(e)
       }
-    case Repo.one(query) do
-      nil ->
+    metrics =  Repo.one(query)
+    case metrics[:count] do   #if count == 0, the query did not find employees for given country
+      0 ->
         {:error, :not_found}
-      metrics ->
+      _ ->
         currency_code =
           Countries.preload(Countries.get_country!(country_id)).currency.code
 
@@ -247,7 +248,7 @@ defmodule Exercise.Employees do
           fn e, {min, max, sum} ->
             salary = e.salary
             {
-              # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
+              # if left hand side = `true`, returns left hand side -> min/max. If left hand side = `false`, return right hand side -> salary
               min < salary && min || salary,
               max > salary && max || salary,
               sum + salary
@@ -282,31 +283,7 @@ defmodule Exercise.Employees do
       }
 
     result = Repo.all(query)
-
-    final  =
-      result
-      #use first elem as intial Enum acc values
-      |> Enum.reduce({nil, nil, 0},
-      fn e, {min, max, sum} ->
-        salary = e[:employee].salary
-        currency = e[:currency]
-        {:ok, salary_usd} = Exercise.Services.CurrencyConverter.convert(currency, target_currency, salary)
-        {
-          # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary
-          min && min < salary_usd && min || salary_usd,
-          max && max > salary_usd && max || salary_usd,
-          sum + salary_usd
-        }
-      end)
-    {min, max, sum} = final
-    mean = round(sum / Enum.count(result))
-
-    {:ok, %{
-      min: round(min),
-      max: round(max),
-      mean: round(mean),
-      currency_code: target_currency
-    }}
+    handle_job_title_metrics(result, target_currency)
   end
 
   ## ==================================================================
@@ -387,6 +364,35 @@ defmodule Exercise.Employees do
       end)
       [transaction_result | acc]
     end)
+  end
+
+  defp  handle_job_title_metrics([], _target_currency) do
+    {:error, :not_found}
+  end
+  defp  handle_job_title_metrics(query_results, target_currency) do
+    {min, max, sum}  =
+      query_results
+      #use first elem as intial Enum acc values
+      |> Enum.reduce({nil, nil, 0}, fn e, {min, max, sum} ->
+        salary = e[:employee].salary
+        currency = e[:currency]
+        {:ok, salary_converted} = Exercise.Services.CurrencyConverter.convert(currency, target_currency, salary)
+        {
+          # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary_converted
+          min && min < salary_converted && min || salary_converted,
+          max && max > salary_converted && max || salary_converted,
+          sum + salary_converted
+        }
+      end)
+
+    mean = round(sum / Enum.count(query_results))
+
+    {:ok, %{
+      min: round(min),
+      max: round(max),
+      mean: round(mean),
+      currency_code: target_currency
+    }}
   end
 
   defp reduce_employee_schema_results({:ok, {:ok, struct}}, {successes, failures}) do
