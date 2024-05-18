@@ -28,6 +28,16 @@ defmodule Exercise.Services.SimpleCacheTest do
 
     end
 
+    test "test employee_metrics cache manual expiration" do
+      key = "country1"
+      value = "some work done for country"
+
+      SimpleCache.insert(@cache_name, key, value, 1000)
+      SimpleCache.expire(@cache_name, key)
+      assert {:error, :not_found} = SimpleCache.get(@cache_name, key)
+
+    end
+
 
   end
 end
