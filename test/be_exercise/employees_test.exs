@@ -108,19 +108,32 @@ defmodule Exercise.EmployeesTest do
         %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
         %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000}
       ]
-      assert {:ok, valid_attr, []} = Employees.batch_write_unsafe(employee_batches)
+      assert %{
+        valid_attr: valid_attr,
+        invalid_attr: [],
+        insert_results: results
+        } = Employees.batch_write_unsafe(employee_batches)
+
       assert length(valid_attr) == length(employee_batches)
-      all_employees = Employees.list_employees() |> Enum.sort()
 
-      # compare inserted employees to employees with attribtues we tried to insert
-      Enum.zip(all_employees, valid_attr)
-      |> Enum.each(fn {db_employee, attr} ->
-        assert db_employee.full_name == attr.full_name
-        assert db_employee.job_title == attr.job_title
-        assert db_employee.salary == attr.salary
-        assert db_employee.country_id == attr.country_id
+      # sort by full name for the following comparison with employees stored in DB
+      sorted_valid_attr = Enum.sort_by(valid_attr, fn e -> e.full_name end)
+
+      # compare inserted employees to employees attributes we tried to insert
+      Employees.list_employees()
+        |> Enum.sort_by(fn e -> e.full_name end)
+        |> Enum.zip(sorted_valid_attr) # zip {actual written employee, attributes we tried to insert}
+        |> Enum.each(fn {db_employee, attr} ->
+          assert db_employee.full_name == attr.full_name
+          assert db_employee.job_title == attr.job_title
+          assert db_employee.salary == attr.salary
+          assert db_employee.country_id == attr.country_id
+        end)
+
+      # ensure transaction results were :ok
+      Enum.each(results, fn r ->
+        assert {:ok, _} = r
       end)
-
     end
 
     test "get_all_by_country_id/1 should return all employees given a valid country id", %{country: country} do

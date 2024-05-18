@@ -34,8 +34,8 @@ defmodule Exercise.Fixtures do
     {:ok, country} =
       attrs
       |> Enum.into(%{
-        code: "CCC",
-        name: "some country"
+        code: "USA",
+        name: "United States of America",
         })
       |> Countries.create_country()
 

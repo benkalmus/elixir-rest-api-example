@@ -18,24 +18,30 @@ defmodule Exercise.Services.CurrencyConverter do
   @spec convert(currency(), currency(), number()) ::
           {:ok, float()}
           | {:error, :unsupported_currency | :negative_amount_given}
-  def convert(same, same, amount) when amount > 0, do: {:ok, amount}
+  def convert(same, same, amount) when amount > 0 do
+    {:ok, amount}
+  end
   def convert(from, to, amount) when amount > 0 do
+    convert_(from, to, amount)
+  end
+  def convert(_from, _to, amount) when amount == 0 do
+    {:ok, 0.0}
+  end
+  def convert(_from, _to, amount) when amount < 0 do
+    {:error, :negative_amount_given}
+  end
+
+  ## ============================================================
+  ## Internal functions
+
+  defp convert_(from, to, amount) do
     case rates()[from <> to] do
       nil ->
         {:error, :unsupported_currency}
-
       val ->
         result = val * amount
         {:ok, result}
     end
-  end
-
-  def convert(_from, _to, amount) when amount == 0 do
-    {:ok, 0.0}
-  end
-
-  def convert(_from, _to, amount) when amount < 0 do
-    {:error, :negative_amount_given}
   end
 
   defp rates do

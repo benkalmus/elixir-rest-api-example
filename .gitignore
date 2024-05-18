@@ -28,4 +28,6 @@ be_exercise-*.tar
 /priv/static/
 
 # Contains a volume mapping to PostgreSQL docker container for data persistence. 
-/priv/db/
+/priv/docker/db/
+docs/other.md
+playground.exs

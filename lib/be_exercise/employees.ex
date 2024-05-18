@@ -9,6 +9,7 @@ defmodule Exercise.Employees do
   alias Exercise.Employees.Employee
   alias Exercise.Countries
 
+  @postgres_max_params 65535
   @doc """
   Returns the list of employees.
 
@@ -111,30 +112,14 @@ defmodule Exercise.Employees do
     Batch writes employees to the database.
     Returns two lists, successfully created Employee{} structs and failed Ecto.Changesets{}.
 
-    {:ok, [ %Employee{} ], [ %Ecto.Changeset{} ]}
+    ## Examples
+    iex> batch_write([%Employee{full_name: "John", ...}])
+    {:ok, [%Employee{full_name: "John", ...], [] }
   """
-  #TODO, can we make this function generic?
+  @spec batch_write([%Employee{}]) ::
+    {:ok, [] | [%Employee{}], [] | [%Ecto.Changeset{}]}
   def batch_write(employee_attrs) do
-    #number of async workers should match to number of DB connections. Defaults to 10.
-    pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
-
-    {created_employees, invalid_changesets} =
-      employee_attrs
-      |> Task.async_stream(fn attr ->
-          case create_employee(attr) do
-            {:ok, employee} -> employee
-            # on failure, return the attributes and changeset
-            {:error, changeset} -> {attr, changeset}
-          end
-        end, max_concurrency: pool_size, on_timeout: :kill_task)
-      # separate results into two lists: employees and failed changesets
-      |> Enum.reduce({[],[]},
-        fn {:ok, {_attr, _changeset} = r}, {successes, failures} ->
-          {successes, [r | failures]};
-        {:ok, employee}, {successes, failures} ->
-          {[employee | successes], failures}
-        end)
-
+    {created_employees, invalid_changesets} = generic_batch_write(employee_attrs, &create_employee/1 )
     {:ok, created_employees, invalid_changesets}
   end
 
@@ -142,50 +127,25 @@ defmodule Exercise.Employees do
     Batch writes employees to the database using Repo.insert_all.
     NOTE: This operation does not perform validations like Repo.insert, and should be used with caution.
 
-    Returns two lists, successful employee creations and failed changesets.
-    {:ok, [employee_attributes :: map()], [%Ecto.Changeset{}] }
-  """
-  #TODO, can we make this function generic?
-  def batch_write_unsafe(employee_attrs) do
-    # drive this via config, but not pool_size
-    pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
-    # insert_all doesn't autogenerate timestamps, generate them ourselves.
-    #Add timestamps as placeholders
-    date_placeholders = %{
-      inserted_at: {:placeholder, :datetime},
-      updated_at: {:placeholder, :datetime}
+    Returns a map containing results from the operation.
+    %{
+      valid_attr: valid_attr,
+      invalid_attr: invalid_attr_and_changeset,
+      insert_results: insert_results
     }
-    # perform changeset validation, note that this won't check constraints (as this is done on Repo.insert)
-    {valid_attr, invalid_attr_and_changeset} =
-      employee_attrs
-      |> Task.async_stream(fn attr ->
-        c = Employee.changeset(%Employee{}, attr)
 
-        new_attr = date_placeholders |> Enum.into(attr)
-        case c.valid? do
-          true -> {:ok, new_attr}
-          false -> {:error, {attr, c}}
-        end
-      end, max_concurrency: pool_size, on_timeout: :kill_task)
-      |> Enum.reduce({[],[]},
-        fn {:ok, {:ok, success}}, {s, f} ->
-          {[success|s], f};
-        {:ok, {:error, failed}}, {s, f} ->
-          {s, [failed|f]}
-        _, acc -> acc     #task failed
-        end)
-
-    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
-    valid_attr
-    |> Enum.chunk_every(10000) #insert might fail if chunk too large (when number of fields in employee table is high)
-    |> Enum.each( fn chunk ->
-      Repo.transaction(fn ->
-        #todo handle transaction error
-        Repo.insert_all(Employee, chunk, placeholders: %{datetime: datetime})
-      end)
-    end)
-
-    {:ok, valid_attr, invalid_attr_and_changeset}
+    valid_attr:  list of attributes passed into the function that returned a valid changeset
+    invalid_attr: tuple list of attributes and changesets that returned an invalid changeset,
+    insert_results: list of results from Repo.transaction, see up-to-date documentation for exact return errors
+  """
+  @spec batch_write_unsafe(%Employee{}) ::
+    %{
+      valid_attr: [%Employee{}],
+      invalid_attr: [{%Employee{}, %Ecto.Changeset{}}],
+      insert_results: [{:ok, any()} | {:error, any()}]
+    }
+  def batch_write_unsafe(employee_attrs) do
+    batch_write_unsafe_func(employee_attrs)
   end
 
   @doc """
@@ -288,6 +248,97 @@ defmodule Exercise.Employees do
           currency_code: code
         }}
     end
+  end
+
+  ## ==================================================================
+  ## Internal functions
+
+  ## Performs a concurrency write on a list of attributes using a given function to insert to DB.
+  defp generic_batch_write(attr_list, create_fun) do
+    #number of async workers should match to number of DB connections. Defaults to 10.
+    pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
+
+    {valid_structs, invalid_changesets} =
+      attr_list
+      |> Task.async_stream(fn attr ->
+          case create_fun.(attr) do
+            {:ok, struct} -> struct
+            # on failure, return the attributes and changeset
+            {:error, changeset} -> {attr, changeset}
+          end
+        end, max_concurrency: pool_size, on_timeout: :kill_task)
+      # separate results into two lists: inserted structs and failed changesets
+      |> Enum.reduce({[],[]},
+        fn {:ok, {_attr, _changeset} = r}, {successes, failures} ->
+          {successes, [r | failures]};
+        {:ok, struct}, {successes, failures} ->
+          {[struct | successes], failures}
+        _, acc ->
+          acc
+        end)
+
+    {valid_structs, invalid_changesets}
+  end
+
+  defp batch_write_unsafe_func(attr_list) do
+    # insert_all doesn't autogenerate timestamps, generate them ourselves.
+    #Add timestamps as placeholders
+    date_placeholders = %{
+      inserted_at: {:placeholder, :datetime},
+      updated_at: {:placeholder, :datetime}
+    }
+
+    # perform changeset validation concurrently, note that this won't check constraints such as foreign id key checks
+    # (as this is done on Repo.insert)
+    {valid_attr, invalid_attr_and_changeset} =
+      attr_list
+      |> Task.async_stream(fn attr ->
+        c = Employee.changeset(%Employee{}, attr)
+
+        new_attr = date_placeholders |> Enum.into(attr)
+        case c.valid? do
+          true -> {:ok, new_attr}
+          false -> {:error, {attr, c}}
+        end
+      end, max_concurrency: System.schedulers_online(), on_timeout: :kill_task)
+
+      |> Enum.reduce({[],[]}, fn
+        {:ok, {:ok, success}}, {s, f} ->
+            {[success | s], f};
+        {:ok, {:error, failed}}, {s, f} ->
+            {s, [failed | f]}
+        _, acc ->
+          acc     #task failed
+        end)
+
+    # generate datetime for timestamps suitable for PostgreSQL DB
+    datetime = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+
+    # DB can refuse insert if chunks are too large
+    # limit number of params to max possible: 65535 / (parameters per attribute)
+    # div() rounds down and returns an integer
+    chunks =  div @postgres_max_params, Enum.count(hd(valid_attr))
+
+    insert_results =
+      valid_attr
+      |> Enum.chunk_every(chunks)
+      |> Enum.reduce([], fn chunk, acc ->
+        transaction_result = Repo.transaction(fn ->
+          Repo.insert_all(Employee, chunk,
+            # insert_all options:
+            placeholders: %{datetime: datetime},
+            on_conflict: :nothing   # skip if already exists
+          )
+        end)
+        [transaction_result | acc]
+      end)
+    ## instead of handling transaction results, allow the caller to handle and interpret the results
+
+    %{
+      valid_attr: valid_attr,
+      invalid_attr: invalid_attr_and_changeset,
+      insert_results: insert_results
+    }
   end
 
 end
