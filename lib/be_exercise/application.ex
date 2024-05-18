@@ -14,9 +14,9 @@ defmodule Exercise.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Exercise.PubSub},
       # Start the Endpoint (http/https)
-      ExerciseWeb.Endpoint
-      # Start a worker by calling: Exercise.Worker.start_link(arg)
-      # {Exercise.Worker, arg}
+      ExerciseWeb.Endpoint,
+      # Start the simple cache service for employee_metrics
+      {Exercise.Services.SimpleCache, :employee_metrics}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
