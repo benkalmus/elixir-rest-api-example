@@ -5,6 +5,8 @@ defmodule Exercise.Application do
 
   use Application
 
+  @employee_metrics_cache :employee_metrics
+
   def start(_type, _args) do
     children = [
       # Start the Ecto repository
@@ -16,7 +18,7 @@ defmodule Exercise.Application do
       # Start the Endpoint (http/https)
       ExerciseWeb.Endpoint,
       # Start the simple cache service for employee_metrics
-      {Exercise.Services.SimpleCache, :employee_metrics}
+      {Exercise.Services.SimpleCache, @employee_metrics_cache}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

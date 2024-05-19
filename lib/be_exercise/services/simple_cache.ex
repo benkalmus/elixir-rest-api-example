@@ -1,6 +1,6 @@
 defmodule Exercise.Services.SimpleCache do
   @doc """
-  An ETS driven cache
+  An ETS driven cache, owned by a GenServer process running a periodic expiry checks on the contents of the cache.
   """
   use GenServer
   require Logger

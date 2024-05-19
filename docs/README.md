@@ -67,9 +67,9 @@ It follows the architecture of a standard, generated phoenix project.
       - [x] query
   - [] 
 
-- [] **Metrics** endpoints
+- [x] **Metrics** endpoints
   - [x] fetch salary stats given country (min, max, mean)
-  - [] fetch salary stats given job title (mean)
+  - [x] fetch salary stats given job title (mean)
 
 - [] Complete all TODOs
 
@@ -146,7 +146,7 @@ It follows the architecture of a standard, generated phoenix project.
   - per_title_salary(job_title, currency // "USD") -> average
     - currency conversion!
 
-- **Metrics cache**: 
+- [x] **Metrics cache**: 
 - Employee metrics record is currently the only place this app is going to do **work** (calculations). Therefore we should store this work in a cache for faster retrieval
   - In-memory Cache options: 
     - Gen servers & state

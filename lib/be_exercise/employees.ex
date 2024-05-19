@@ -8,6 +8,7 @@ defmodule Exercise.Employees do
   alias Exercise.Repo
   alias Exercise.Employees.Employee
   alias Exercise.Countries
+  alias Exercise.Services.{CurrencyConverter, SimpleCache}
 
   @postgres_max_params 65535
   @doc """
@@ -190,7 +191,7 @@ defmodule Exercise.Employees do
 
   @doc """
     Returns salary metrics for a given country id, in the currency code of the country given.
-    Salary metrics include: min, max, mean average.
+    Salary metrics include: min, max, mean average. All values are returned as integers
 
     ## Examples
     iex> salary_metrics_by_country(1)
@@ -207,8 +208,9 @@ defmodule Exercise.Employees do
       max: integer(),
       mean: integer(),
       currency_code: String.t()
-    }}
-    | {:error, :not_found}
+    }} |
+    {:error, :not_found} |
+    {:error, :metrics_query_failed}
   def salary_metrics_by_country(country_id) do
     query =
       from e in Employee,
@@ -220,19 +222,7 @@ defmodule Exercise.Employees do
         count: count(e)
       }
     metrics =  Repo.one(query)
-    case metrics[:count] do   #if count == 0, the query did not find employees for given country
-      0 ->
-        {:error, :not_found}
-      _ ->
-        currency_code =
-          Countries.preload(Countries.get_country!(country_id)).currency.code
-
-        # PostgreSQL uses Decimal to calculate average, convert back to integer and update map
-        mean_int = Decimal.to_integer(Decimal.round(metrics[:mean], 0))
-        metrics = %{metrics | mean: mean_int }
-        result = Map.put(metrics, :currency_code, currency_code)
-        {:ok, result}
-    end
+    handle_salary_metrics_by_country(metrics, country_id)
   end
 
   ## TODO benchmark performance vs DB query
@@ -241,29 +231,12 @@ defmodule Exercise.Employees do
       [] ->
         {:error, :not_found}
 
-      [head | tail] = employees ->
-        {min, max, sum} = tail
-          #use first elem as intial Enum acc values
-          |> Enum.reduce({head.salary, head.salary, head.salary},
-          fn e, {min, max, sum} ->
-            salary = e.salary
-            {
-              # if left hand side = `true`, returns left hand side -> min/max. If left hand side = `false`, return right hand side -> salary
-              min < salary && min || salary,
-              max > salary && max || salary,
-              sum + salary
-            }
-          end)
-
-        mean = sum / Enum.count(employees)
+      [head | _tail] = employees ->
+        metrics_map = reduce_results_to_metrics(employees)
         code = preload(head).country.currency.code
+        result_map = Map.put(metrics_map, :currency_code, code)
 
-        {:ok, %{
-          min: min,
-          max: max,
-          mean: mean,
-          currency_code: code
-        }}
+        {:ok, result_map}
     end
   end
 
@@ -271,14 +244,13 @@ defmodule Exercise.Employees do
   def salary_metrics_by_job_title(job_title, target_currency \\ "USD") do
     query =
       from e in Employee,
-      # join: country in assoc(e, :country),
       join: country in Exercise.Countries.Country, on: country.id == e.country_id,
       join: currency in Exercise.Countries.Currency, on: country.currency_id == currency.id,
-      # join: currency in assoc(country :currency),
       where: e.job_title == ^job_title,
       preload: [country: {country, currency:  currency}],
       select: %{
         employee: e,
+        salary: e.salary,
         currency: currency.code
       }
 
@@ -366,24 +338,49 @@ defmodule Exercise.Employees do
     end)
   end
 
+  defp handle_salary_metrics_by_country(%{count: num} = query_result, country_id) when num > 0 do
+    currency_code =   #todo, find out if we can retrieve currency_code in one query
+      Countries.preload(Countries.get_country!(country_id)).currency.code
+
+    # PostgreSQL uses Decimal to calculate average, convert back to integer and update map
+    mean_int = Decimal.to_integer(Decimal.round(query_result.mean, 0))
+    # update mean with an integer
+    query_result = %{query_result | mean: mean_int }
+
+    # add currency code to result map
+    result = Map.put(query_result, :currency_code, currency_code)
+    {:ok, result}
+  end
+  #if count == 0, the query did not find employees for given country
+  defp handle_salary_metrics_by_country(%{count: 0} = _query_result, _country_id) do
+    {:error, :not_found}
+  end
+  #query failed
+  defp handle_salary_metrics_by_country(query_result, _) do
+    Logger.error("Salary metrics by country query failed to produce metrics in #{inspect query_result}")
+    {:error, :metrics_query_failed}
+  end
+
+
   defp  handle_job_title_metrics([], _target_currency) do
     {:error, :not_found}
   end
-  defp  handle_job_title_metrics(query_results, target_currency) do
+  defp  handle_job_title_metrics([head | tail] = query_results, target_currency) do
     {min, max, sum}  =
-      query_results
+      tail
       #use first elem as intial Enum acc values
-      |> Enum.reduce({nil, nil, 0}, fn e, {min, max, sum} ->
-        salary = e[:employee].salary
-        currency = e[:currency]
-        {:ok, salary_converted} = Exercise.Services.CurrencyConverter.convert(currency, target_currency, salary)
-        {
-          # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary_converted
-          min && min < salary_converted && min || salary_converted,
-          max && max > salary_converted && max || salary_converted,
-          sum + salary_converted
-        }
-      end)
+      |> Enum.reduce({head.employee.salary, head.employee.salary, head.employee.salary},  #TODO this reduce function is used twice, refactor generic
+        fn map, {min, max, sum} ->
+          salary = map.employee.salary
+          currency = map.currency
+          {:ok, salary_converted} = CurrencyConverter.convert(currency, target_currency, salary)
+          {
+            # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary_converted
+            min < salary_converted && min || salary_converted,
+            max > salary_converted && max || salary_converted,
+            sum + salary_converted
+          }
+        end)
 
     mean = round(sum / Enum.count(query_results))
 
@@ -403,6 +400,30 @@ defmodule Exercise.Employees do
   end
   defp reduce_employee_schema_results(_, acc) do
     acc
+  end
+
+  defp reduce_results_to_metrics([head | tail] = input_employees) do
+    {min, max, sum} =
+      tail
+      #use first elem as intial accumulator values
+      |> Enum.reduce({head.salary, head.salary, head.salary}, &reduce_results_to_metrics_fun/2)
+
+    mean = round(sum / Enum.count(input_employees))
+    %{
+      min: min,
+      max: max,
+      mean: mean
+    }
+  end
+
+  defp reduce_results_to_metrics_fun(employee, {min, max, sum}) do
+    salary = employee.salary
+    {
+      # if left hand side = `true`, returns left hand side -> min/max. If left hand side = `false`, return right hand side -> salary
+      min < salary && min || salary,
+      max > salary && max || salary,
+      sum + salary
+    }
   end
 
 end
