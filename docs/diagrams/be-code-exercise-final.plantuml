@@ -15,9 +15,18 @@ cloud {
 
 package "BE Code Exercise" as [App] {
     component "API Routes" as [API]
-    component "Controllers" as [Contr]
+    ' component "Controllers" as [Contr]
     component "Json Views" as [View]
     component "Ecto Models" as [Model]
+    component "Cache Layer" as [Cache]
+
+
+
+    frame "Controller APIs" as [Contr] {
+        component [Employee]
+        component [Country]
+        component [Currency]
+    }
 }
 
 package "DB" {
@@ -33,6 +42,9 @@ package "DB" {
 
 ' APP
 [API] --> [Contr]
+' fetches and stores data in cache
+[Employee] <--> [Cache]
+
 [Contr] <--> [Model]
 [Contr] -u-> [View]
 
@@ -44,8 +56,8 @@ package "DB" {
 [Client] -[hidden]d-> [App]
 
 ' DB relationships
-[Countries] -r-> [Employees] : "one to many"
-[Currencies] -r-> [Countries] : "one to many"
+[Countries] -r-> [Employees] : " 1:M "
+[Currencies] -r-> [Countries] : " 1:M "
 
 
 @@enduml

@@ -12,7 +12,42 @@ It follows the architecture of a standard, generated phoenix project.
 - [x] Fix existing bugs in the application
 - [x] Create an employee resource
 - [x] Seed script
-- Salary metrics endpoint
+- [x] Salary metrics endpoint
+
+## Implementation Details
+
+Firstly, the inital implementation of the BE-Exercise app had a few bugs which had to be addressed.  
+
+-- add version to json API 
+
+## What was done 
+Organised the project with the use of Makefile, Changefile and added versioning. Secondly, as the app grew I organised the structure to separate various domains such as documentation, docker compose files and DB storage.
+
+I started by adding better test coverage to countries and currencies tests. This helped me identify several bugs in the application. 
+- fixed the Country-Currency table relationship
+- added validation constraints 
+  - unique foreign key
+  - delete changeset, made a decision about handling orphaned rows 
+
+- Json API
+  - get_currency_by_code 
+  - employees resource 
+  - metrics resource 
+
+- Seed script 
+
+
+## Flaws in final implementation
+
+### Storing Salary (money) as integer
+- should at least create a wrapper that scales by some factor, e.g 100, 
+- should use Decimal or Money type. This was initially implemented in DecimalUtils module. 
+- increases complexity of the app, namely the currency conversion service. 
+  - I decided that for the purpose of this exercise, it's not a necessary requirement, 
+  however in a production environment I wouldn't deploy an app that handles money using float types (due to loss of precision)
+
+- someone can create a currency that's not supported by conversion service. 
+
 
 ### TODOs
 

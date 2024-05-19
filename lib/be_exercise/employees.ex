@@ -11,6 +11,7 @@ defmodule Exercise.Employees do
   alias Exercise.Services.{CurrencyConverter, SimpleCache, SimpleCacheSup}
 
   @postgres_max_params 65535
+
   @doc """
   Returns the list of employees.
 
@@ -240,7 +241,19 @@ defmodule Exercise.Employees do
     end
   end
 
+  @doc """
+    Returns salary metrics for a given job title, in the currency code of the country given.
+    Salary metrics include: min, max, mean average. All values are returned as integers and are rounded up.
 
+    ## Examples
+    iex> salary_metrics_by_job_title("Developer")
+    {:ok, %{
+      min: 10000,
+      max: 20000,
+      mean: 15000,
+      currency_code: "USD"
+    }}
+  """
   def salary_metrics_by_job_title(job_title, target_currency \\ "USD") do
     query =
       from e in Employee,
@@ -396,7 +409,7 @@ defmodule Exercise.Employees do
           }
         end)
 
-    mean = round(sum / Enum.count(query_results))
+    mean = sum / Enum.count(query_results)
 
     {:ok, %{
       min: round(min),
