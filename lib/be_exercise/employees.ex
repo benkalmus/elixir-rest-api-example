@@ -8,7 +8,7 @@ defmodule Exercise.Employees do
   alias Exercise.Repo
   alias Exercise.Employees.Employee
   alias Exercise.Countries
-  alias Exercise.Services.{CurrencyConverter, SimpleCache}
+  alias Exercise.Services.{CurrencyConverter, SimpleCache, SimpleCacheSup}
 
   @postgres_max_params 65535
   @doc """
@@ -256,6 +256,20 @@ defmodule Exercise.Employees do
 
     result = Repo.all(query)
     handle_job_title_metrics(result, target_currency)
+  end
+
+  ## ==================================================================
+  ## API with Caching
+
+  def salary_metrics_by_country_cached(country_id) do
+    case SimpleCache.get(SimpleCacheSup.employee_metrics_cache(), country_id) do
+      {:ok, result} ->
+        {:ok, result}
+      {:error, _} ->
+        result = salary_metrics_by_country(country_id)
+        SimpleCache.insert(SimpleCacheSup.employee_metrics_cache(), country_id, result)
+        result
+    end
   end
 
   ## ==================================================================
