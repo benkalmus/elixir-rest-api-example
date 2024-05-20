@@ -40,8 +40,6 @@ defmodule Exercise.Employees do
       ** (Ecto.NoResultsError)
 
   """
-  #get employee and preload country
-
   def get_employee!(id) do
     Repo.get!(Employee, id)
   end
@@ -111,6 +109,18 @@ defmodule Exercise.Employees do
     Employee.changeset(employee, attrs)
   end
 
+
+  @doc """
+  Helper function for preloading Employee and all its associations (:country, :currency).
+  """
+  @spec preload(employee :: %Employee{}) :: %Employee{}
+  def preload(employee = %Employee{}) do
+    Repo.preload(employee, [:country, country: :currency])
+  end
+
+  ## ================================================================================
+  ## Batch API
+
   @doc """
     Batch writes employees to the database.
     Returns two lists, successfully created Employee{} structs and failed Ecto.Changesets{}.
@@ -152,13 +162,8 @@ defmodule Exercise.Employees do
     batch_write_unsafe_func(employee_attrs)
   end
 
-  @doc """
-  Helper function for preloading Employee and all its associations.
-  """
-  @spec preload(employee :: %Employee{}) :: %Employee{}
-  def preload(employee = %Employee{}) do
-    Repo.preload(employee, [:country, country: :currency])
-  end
+  ## ================================================================================
+  ## Queries API
 
   @doc """
   Returns all employees for a given country id.
@@ -191,6 +196,9 @@ defmodule Exercise.Employees do
       where: e.job_title == ^job_title
     Repo.all(query)
   end
+
+  ## ================================================================================
+  ## Metrics API
 
   @doc """
     Returns salary metrics for a given country id, in the currency code of the country given.
@@ -299,7 +307,7 @@ defmodule Exercise.Employees do
     handle_job_title_metrics(result, target_currency)
   end
 
-  ## ==================================================================
+  ## ================================================================================
   ## API with Caching
 
   @doc """
@@ -317,7 +325,7 @@ defmodule Exercise.Employees do
     end
   end
 
-  ## ==================================================================
+  ## ================================================================================
   ## Internal functions
 
   ## Takes a list of attributes to insert to Database, in concurrent batches.

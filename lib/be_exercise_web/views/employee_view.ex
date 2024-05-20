@@ -19,7 +19,6 @@ defmodule ExerciseWeb.EmployeeView do
 
   @doc """
   Renders a batched insert results into successful and failed lists.
-  ## TODO Example
   """
   def batch_result(%{successful: successful, failed: failed}) do
     errors = Enum.map(failed, fn {attr, changeset} ->

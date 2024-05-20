@@ -16,7 +16,7 @@ defmodule Exercise.EmployeesTest do
     full_name: "some full_name",
     job_title: "some job_title",
     salary: 42,
-    country_id: :todo
+    country_id: :placeholder
   }
 
   setup do
