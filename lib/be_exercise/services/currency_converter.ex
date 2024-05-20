@@ -31,6 +31,19 @@ defmodule Exercise.Services.CurrencyConverter do
     {:error, :negative_amount_given}
   end
 
+  def supported_currency_codes() do
+    [
+      "EUR",
+      "GBP",
+      "AUD",
+      "NZD",
+      "USD",
+      "CAD",
+      "CHF",
+      "JPY"
+    ]
+  end
+
   ## ============================================================
   ## Internal functions
 

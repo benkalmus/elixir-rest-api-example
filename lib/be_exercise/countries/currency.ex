@@ -2,6 +2,8 @@ defmodule Exercise.Countries.Currency do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Exercise.Services.CurrencyConverter
+
   schema "currencies" do
     field :code, :string
     field :name, :string
@@ -17,6 +19,7 @@ defmodule Exercise.Countries.Currency do
     |> cast(attrs, [:code, :name, :symbol])
     |> validate_required([:code, :name, :symbol])
     |> validate_length(:code, max: 3)
+    |> validate_inclusion(:code, CurrencyConverter.supported_currency_codes())
     |> no_assoc_constraint(:country)
     |> unique_constraint(:name)
     |> unique_constraint(:code)

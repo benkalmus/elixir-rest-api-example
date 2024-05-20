@@ -1,7 +1,6 @@
 defmodule ExerciseWeb.CountryControllerTest do
   use ExerciseWeb.ConnCase
 
-  alias Exercise.Countries
   alias Exercise.Countries.Country
   alias Exercise.Fixtures
 
@@ -15,7 +14,7 @@ defmodule ExerciseWeb.CountryControllerTest do
   }
   @invalid_attrs %{code: nil, name: nil}
   @valid_currency_attrs %{
-    code: "ABC",
+    code: "USD",
     name: "some name",
     symbol: "some symbol"
   }

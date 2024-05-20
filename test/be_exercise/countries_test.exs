@@ -5,12 +5,12 @@ defmodule Exercise.CountriesTest do
   alias Exercise.Fixtures
 
   @currency_valid_attrs %{
-    code: "ABC",
+    code: "USD",
     name: "some name",
     symbol: "some symbol"
   }
   @currency_update_attrs %{
-    code: "XYZ",
+    code: "EUR",
     name: "some updated name",
     symbol: "some updated symbol"
   }
@@ -122,7 +122,7 @@ defmodule Exercise.CountriesTest do
     test "update_currency/1 to an existing currency returns error changeset" do
       _first_currency = Fixtures.currency_fixture(@currency_valid_attrs)
       # create another currency with different name and code
-      currency = Fixtures.currency_fixture(%{@currency_valid_attrs | code: "XYZ", name: "name"})
+      currency = Fixtures.currency_fixture(%{@currency_valid_attrs | code: "EUR", name: "name"})
       # updating currency to existing code and name (_first_currency)
       assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @currency_valid_attrs)
     end

@@ -5,12 +5,12 @@ defmodule ExerciseWeb.CurrencyControllerTest do
   alias Exercise.Fixtures
 
   @create_attrs %{
-    code: "ABC",
+    code: "USD",
     name: "some name",
     symbol: "some symbol"
   }
   @update_attrs %{
-    code: "XYZ",
+    code: "EUR",
     name: "some updated name",
     symbol: "some updated symbol"
   }
@@ -50,7 +50,7 @@ defmodule ExerciseWeb.CurrencyControllerTest do
 
       assert %{
                "id" => ^id,
-               "code" => "ABC",
+               "code" => "USD",
                "name" => "some name",
                "symbol" => "some symbol"
              } = json_response(conn, 200)["data"]
@@ -112,7 +112,7 @@ defmodule ExerciseWeb.CurrencyControllerTest do
 
       assert %{
                "id" => ^id,
-               "code" => "XYZ",
+               "code" => "EUR",
                "name" => "some updated name",
                "symbol" => "some updated symbol"
              } = json_response(conn, 200)["data"]
