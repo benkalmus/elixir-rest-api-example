@@ -10,7 +10,8 @@ defmodule Exercise.Employees do
   alias Exercise.Countries
   alias Exercise.Services.{CurrencyConverter, SimpleCache, SimpleCacheSup}
 
-  @postgres_max_params 65535
+  @postgres_max_params  65535
+  @default_ttl_ms       60_000
 
   @doc """
   Returns the list of employees.
@@ -126,8 +127,9 @@ defmodule Exercise.Employees do
   end
 
   @doc """
-    Batch writes employees to the database using Repo.insert_all.
+    Batch writes employees to the database using Repo.insert_all as fast as possible.
     NOTE: This operation does not perform validations like Repo.insert, and should be used with caution.
+      Intended to be used internally only, e.g seed script.
 
     Returns a map containing results from the operation.
     %{
@@ -140,7 +142,7 @@ defmodule Exercise.Employees do
     invalid_attr: tuple list of attributes and changesets that returned an invalid changeset,
     insert_results: list of results from Repo.transaction, see up-to-date documentation for exact return errors
   """
-  @spec batch_write_unsafe(%Employee{}) ::
+  @spec batch_write_unsafe([%Employee{}]) ::
     %{
       valid_attr: [%Employee{}],
       invalid_attr: [{%Employee{}, %Ecto.Changeset{}}],
@@ -226,7 +228,25 @@ defmodule Exercise.Employees do
     handle_salary_metrics_by_country(metrics, country_id)
   end
 
-  ## TODO benchmark performance vs DB query
+  @doc"""
+  @spec salary_metrics_by_country(integer()) ::
+    {:ok, %{
+      min: integer(),
+      max: integer(),
+      mean: integer(),
+      currency_code: String.t()
+    }} |
+    {:error, :not_found} |
+    {:error, :metrics_query_failed}
+  """
+  @spec salary_metrics_by_country_internal(integer()) ::
+  {:ok, %{
+    min: integer(),
+    max: integer(),
+    mean: integer(),
+    currency_code: String.t()
+  }} |
+  {:error, :not_found}
   def salary_metrics_by_country_internal(country_id) do
     case get_all_by_country_id(country_id) do
       [] ->
@@ -254,6 +274,14 @@ defmodule Exercise.Employees do
       currency_code: "USD"
     }}
   """
+  @spec salary_metrics_by_job_title(String.t()) ::
+  {:ok, %{
+    min: integer(),
+    max: integer(),
+    mean: integer(),
+    currency_code: String.t()
+  }} |
+  {:error, :not_found}
   def salary_metrics_by_job_title(job_title, target_currency \\ "USD") do
     query =
       from e in Employee,
@@ -274,13 +302,17 @@ defmodule Exercise.Employees do
   ## ==================================================================
   ## API with Caching
 
+  @doc """
+    Cached version of handle_salary_metrics_by_country/1.
+    Attempts to retrieve a cached result, if not found, queries the DB, stores a new cache and returns the result.
+  """
   def salary_metrics_by_country_cached(country_id) do
     case SimpleCache.get(SimpleCacheSup.employee_metrics_cache(), country_id) do
       {:ok, result} ->
         {:ok, result}
       {:error, _} ->
         result = salary_metrics_by_country(country_id)
-        SimpleCache.insert(SimpleCacheSup.employee_metrics_cache(), country_id, result)
+        SimpleCache.insert(SimpleCacheSup.employee_metrics_cache(), country_id, result, @default_ttl_ms)
         result
     end
   end
@@ -288,7 +320,13 @@ defmodule Exercise.Employees do
   ## ==================================================================
   ## Internal functions
 
-  ## Performs a concurrency write on a list of attributes using a given function to insert to DB.
+  ## Takes a list of attributes to insert to Database, in concurrent batches.
+  ## This functions takes an insert function, such as Employee.create_employee/1, and runs it concurrently using
+  ## maximum number of DB connections configured by :pool_size.
+  ## The higher order function is required to return output from Repo.insert, ie: {:ok, result} or {:error, changeset}
+  ## Returns a list of inserted structs and a tuple list of failed attributes with their changesets.
+  @spec generic_batch_write([map()], (map() -> {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}) )
+    :: {[map()], [{map(), Ecto.Changeset.t()}]}
   defp generic_batch_write(attr_list, create_fun) do
     #number of async workers should match to number of DB connections. Defaults to 10.
     pool_size = Application.get_env(:be_exercise, Repo)[:pool_size] || 10
@@ -308,6 +346,7 @@ defmodule Exercise.Employees do
     {valid_structs, invalid_changesets}
   end
 
+  # Helper function for performing batch_write unsafely (without validation). Intended to be used internally only.
   defp batch_write_unsafe_func(attr_list) do
     # insert_all doesn't autogenerate timestamps, generate them ourselves.
     #Add timestamps as placeholders
@@ -357,7 +396,7 @@ defmodule Exercise.Employees do
       transaction_result = Repo.transaction(fn ->
         Repo.insert_all(Employee, chunk,
           # insert_all options:
-          placeholders: %{datetime: datetime},
+          placeholders: %{datetime: datetime},  #replace placeholders with datetime
           on_conflict: :nothing   # skip if already exists
         )
       end)
@@ -389,10 +428,10 @@ defmodule Exercise.Employees do
   end
 
 
-  defp  handle_job_title_metrics([], _target_currency) do
+  defp handle_job_title_metrics([], _target_currency) do
     {:error, :not_found}
   end
-  defp  handle_job_title_metrics([head | tail] = query_results, target_currency) do
+  defp handle_job_title_metrics([head | tail] = query_results, target_currency) do
     {min, max, sum}  =
       tail
       #use first elem as intial Enum acc values
@@ -433,7 +472,7 @@ defmodule Exercise.Employees do
     {min, max, sum} =
       tail
       #use first elem as intial accumulator values
-      |> Enum.reduce({head.salary, head.salary, head.salary}, &reduce_results_to_metrics_fun/2)
+      |> Enum.reduce({head.salary, head.salary, head.salary}, &reduce_results_to_metrics_func/2)
 
     mean = round(sum / Enum.count(input_employees))
     %{
@@ -443,7 +482,7 @@ defmodule Exercise.Employees do
     }
   end
 
-  defp reduce_results_to_metrics_fun(employee, {min, max, sum}) do
+  defp reduce_results_to_metrics_func(employee, {min, max, sum}) do
     salary = employee.salary
     {
       # if left hand side = `true`, returns left hand side -> min/max. If left hand side = `false`, return right hand side -> salary
