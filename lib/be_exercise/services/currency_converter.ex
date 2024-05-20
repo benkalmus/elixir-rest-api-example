@@ -31,6 +31,10 @@ defmodule Exercise.Services.CurrencyConverter do
     {:error, :negative_amount_given}
   end
 
+  @doc """
+  Returns a list of supported currency codes
+  """
+  @spec supported_currency_codes() :: [currency()]
   def supported_currency_codes() do
     [
       "EUR",
