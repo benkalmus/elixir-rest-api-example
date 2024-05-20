@@ -50,6 +50,17 @@ At this stage, the DB will not have any data. You may chose to populate the data
 
 > `make db-seed`
 
+You can also run the script manually with options:
+
+```sh
+# to seed 100_000 employees into the DB
+mix run priv/repo/seeds.exs --number=100000
+
+## To show usage:
+mix run priv/repo/seeds.exs --help
+```
+
+
 If you wish to start fresh, drop everything in the database with:
 
 > `make db-drop`
@@ -72,7 +83,6 @@ Benchmark script is located in [priv/bench/benchmark.exs](/priv/bench/benchmark.
 You can run it along with all DB prereqs with:
 
 > `make bench`
-
 
 # Implementation Details
 
