@@ -43,6 +43,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
         "job_title" => "some job_title",
         "salary" => 42,
         "country_id" => ^country_id,
+        "country_name" => "United States of America",
         "currency_code" => ^currency_code
       }] = json_response(conn, 200)["data"]
     end
@@ -55,11 +56,17 @@ defmodule ExerciseWeb.EmployeeControllerTest do
 
       conn = get(conn, ~p"/api/employees/#{id}")
 
+      country_id = country.id
+      currency_code = country.currency.code
+
       assert %{
                "id" => ^id,
                "full_name" => "some full_name",
                "job_title" => "some job_title",
-               "salary" => 42
+               "salary" => 42,
+               "country_id" => ^country_id,
+               "country_name" => "United States of America",
+               "currency_code" => ^currency_code
              } = json_response(conn, 200)["data"]
     end
 
@@ -82,6 +89,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
         "full_name" => "John Smith",
         "job_title" => "Developer",
         "salary" => 50000,
+        "country_name" => "United States of America",
         "country_id" => ^country_id
       }] = response["successful"]
 
@@ -110,6 +118,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
                "salary" => employee.salary,
                "job_title" => employee.job_title,
                "country_id" => employee.country.id,
+               "country_name" => employee.country.name,
                "currency_code" => employee.country.currency.code
              } == json_response(conn, 200)["data"]
     end
@@ -136,6 +145,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
                "job_title" => "some updated job_title",
                "salary" => 43,
                "country_id" => employee.country.id,
+               "country_name" => employee.country.name,
                "currency_code" => employee.country.currency.code
              } == json_response(conn, 200)["data"]
     end
@@ -158,7 +168,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       end
     end
   end
-require Logger
+
   describe "employee_metrics" do
     setup [:create_employees_for_metrics]
 

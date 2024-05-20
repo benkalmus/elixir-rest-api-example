@@ -56,6 +56,7 @@ defmodule ExerciseWeb.EmployeeView do
       job_title: employee.job_title,
       salary: employee.salary,
       country_id: employee.country.id,
+      country_name: employee.country.name,
       currency_code: employee.country.currency.code
     }
   end
