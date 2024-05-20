@@ -22,7 +22,7 @@ defmodule Exercise.Services.CurrencyConverter do
     {:ok, amount}
   end
   def convert(from, to, amount) when amount > 0 do
-    convert_(from, to, amount)
+    convert_func(from, to, amount)
   end
   def convert(_from, _to, amount) when amount == 0 do
     {:ok, 0.0}
@@ -51,7 +51,7 @@ defmodule Exercise.Services.CurrencyConverter do
   ## ============================================================
   ## Internal functions
 
-  defp convert_(from, to, amount) do
+  defp convert_func(from, to, amount) do
     case rates()[from <> to] do
       nil ->
         {:error, :unsupported_currency}
