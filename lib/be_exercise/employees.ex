@@ -220,8 +220,7 @@ defmodule Exercise.Employees do
       mean: integer(),
       currency_code: String.t()
     }} |
-    {:error, :not_found} |
-    {:error, :metrics_query_failed}
+    {:error, :not_found}
   def salary_metrics_by_country(country_id) do
     query =
       from e in Employee,
@@ -432,7 +431,7 @@ defmodule Exercise.Employees do
   #query failed
   defp handle_salary_metrics_by_country(query_result, _) do
     Logger.error("Salary metrics by country query failed to produce metrics in #{inspect query_result}")
-    {:error, :metrics_query_failed}
+    {:error, :not_found}
   end
 
 
