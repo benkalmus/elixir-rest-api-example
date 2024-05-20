@@ -17,7 +17,13 @@ defmodule Exercise.Services.SimpleCacheSup do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  # Return name of the Employee Metrics cache
+  @doc """
+  Returns name of the Employee Metrics cache
+
+  ## Examples
+    iex> employee_metrics_cache()
+    :employee_metrics_cache
+  """
   @spec employee_metrics_cache() :: :employee_metrics_cache
   def employee_metrics_cache() do
     :employee_metrics_cache

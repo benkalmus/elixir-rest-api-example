@@ -53,14 +53,31 @@ defmodule Exercise.Services.SimpleCache do
   ## ====================================================
   ## API
 
-  # API for setting the cache with an optional expiration time
+  @doc """
+  API for inserting into the cache with an optional expiration time.
+
+  ## Examples
+    iex> SimpleCache.insert(:my_cache, "key", "value")
+    :ok
+  """
+  @spec insert(atom(), any(), any(), integer()) :: :ok
   def insert(cache_name, key, value, ttl \\ @default_ttl_ms) do
     exp_time = System.monotonic_time(:millisecond) + ttl
     :ets.insert(cache_name, {key, {value, exp_time}})
     :ok
   end
 
-  # API for getting a value from the cache
+  @doc """
+  API for retrieving a value from the cache.
+
+  ## Examples
+    iex> SimpleCache.get(:my_cache, "key")
+    {:ok, "value"}
+
+    iex> SimpleCache.get(:my_cache, "fake key")
+    {:error, :not_found}
+  """
+  @spec get(atom(), any()) :: {:ok, any()} | {:error, :not_found}
   def get(cache_name, key) do
     case :ets.lookup(cache_name, key) do
       [{_, {value, _}}] ->
@@ -71,7 +88,14 @@ defmodule Exercise.Services.SimpleCache do
     end
   end
 
-  # API to manually expire a key from the cache (deletes it)
+  @doc """
+  API to manually expire a key from the cache (deletes it).
+
+  ## Examples
+    iex> SimpleCache.expire(:my_cache, "key")
+    :ok
+  """
+  @spec get(atom(), any()) :: :ok
   def expire(cache_name, key) do
     :ets.delete(cache_name, key)
     :ok
