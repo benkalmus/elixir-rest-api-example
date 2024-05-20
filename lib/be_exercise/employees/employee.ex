@@ -5,7 +5,7 @@ defmodule Exercise.Employees.Employee do
   schema "employees" do
     field :full_name, :string
     field :job_title, :string
-    field :salary,    :integer
+    field :salary, :integer
     belongs_to :country, Exercise.Countries.Country, foreign_key: :country_id
 
     timestamps()

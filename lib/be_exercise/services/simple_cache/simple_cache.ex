@@ -5,8 +5,10 @@ defmodule Exercise.Services.SimpleCache do
   use GenServer
   require Logger
 
-  @default_expire_check_freq_ms 60_000  #1min
-  @default_ttl_ms               60_000  #1min
+  # 1min
+  @default_expire_check_freq_ms 60_000
+  # 1min
+  @default_ttl_ms 60_000
 
   # Starts the GenServer
   def start_link(name) do
@@ -18,10 +20,17 @@ defmodule Exercise.Services.SimpleCache do
   def init(name) do
     # Create the ETS table when the GenServer starts
     :ets.new(name, [:named_table, :public, {:read_concurrency, true}, {:write_concurrency, true}])
-    expire_time = Application.get_env(:be_exercise, :simplecache_expire_check_freq_ms, @default_expire_check_freq_ms)
+
+    expire_time =
+      Application.get_env(
+        :be_exercise,
+        :simplecache_expire_check_freq_ms,
+        @default_expire_check_freq_ms
+      )
 
     Logger.info("Started new simple cache instance #{name}")
-    Process.send_after(self(), :expire, expire_time) # schedule check for expired keys
+    # schedule check for expired keys
+    Process.send_after(self(), :expire, expire_time)
     {:ok, %{cache_name: name, expire_time: expire_time}}
   end
 
@@ -30,13 +39,14 @@ defmodule Exercise.Services.SimpleCache do
     Logger.debug("Running scheduled cache expiry #{name}")
     # scan and remove expired keys
     :ets.tab2list(name)
-      |> Enum.each(fn {key, {_value, exp_time}} ->
-        if System.monotonic_time(:millisecond) > exp_time do
-          :ets.delete(name, key)
-        end
-      end)
+    |> Enum.each(fn {key, {_value, exp_time}} ->
+      if System.monotonic_time(:millisecond) > exp_time do
+        :ets.delete(name, key)
+      end
+    end)
 
-    Process.send_after(self(), :expire, expire_time) # schedule next check
+    # schedule next check
+    Process.send_after(self(), :expire, expire_time)
     {:noreply, state}
   end
 
@@ -55,6 +65,7 @@ defmodule Exercise.Services.SimpleCache do
     case :ets.lookup(cache_name, key) do
       [{_, {value, _}}] ->
         {:ok, value}
+
       [] ->
         {:error, :not_found}
     end
@@ -65,5 +76,4 @@ defmodule Exercise.Services.SimpleCache do
     :ets.delete(cache_name, key)
     :ok
   end
-
 end

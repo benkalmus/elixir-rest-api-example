@@ -60,7 +60,10 @@ defmodule Exercise.CountriesTest do
 
     test "update_currency/2 with valid data updates the currency" do
       currency = Fixtures.currency_fixture()
-      assert {:ok, %Currency{} = currency} = Countries.update_currency(currency, @currency_update_attrs)
+
+      assert {:ok, %Currency{} = currency} =
+               Countries.update_currency(currency, @currency_update_attrs)
+
       assert currency.code == @currency_update_attrs.code
       assert currency.name == @currency_update_attrs.name
       assert currency.symbol == @currency_update_attrs.symbol
@@ -68,7 +71,10 @@ defmodule Exercise.CountriesTest do
 
     test "update_currency/2 with invalid data returns error changeset" do
       currency = Fixtures.currency_fixture()
-      assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @currency_invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.update_currency(currency, @currency_invalid_attrs)
+
       assert currency == Countries.get_currency!(currency.id)
     end
 
@@ -98,7 +104,10 @@ defmodule Exercise.CountriesTest do
       currency = Fixtures.currency_fixture()
 
       assert {:error, %Ecto.Changeset{}} =
-               Countries.update_currency(currency, %{@currency_valid_attrs | :code => "invalid code"})
+               Countries.update_currency(currency, %{
+                 @currency_valid_attrs
+                 | :code => "invalid code"
+               })
     end
 
     test "get_currency_by_code!/1 returns the currency with given code" do
@@ -124,7 +133,8 @@ defmodule Exercise.CountriesTest do
       # create another currency with different name and code
       currency = Fixtures.currency_fixture(%{@currency_valid_attrs | code: "EUR", name: "name"})
       # updating currency to existing code and name (_first_currency)
-      assert {:error, %Ecto.Changeset{}} = Countries.update_currency(currency, @currency_valid_attrs)
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.update_currency(currency, @currency_valid_attrs)
     end
   end
 
@@ -139,9 +149,11 @@ defmodule Exercise.CountriesTest do
 
     test "list_countries/0 returns all countries", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
+
       list =
         Countries.list_countries()
         |> Enum.map(&Countries.preload(&1))
+
       assert list == [country]
     end
 
@@ -150,7 +162,7 @@ defmodule Exercise.CountriesTest do
       assert Countries.preload(Countries.get_country!(country.id)) == country
     end
 
-    test "create_country/1 with valid data creates a country", %{currency: currency}  do
+    test "create_country/1 with valid data creates a country", %{currency: currency} do
       attrs = create_country_attributes(@country_valid_attrs, currency)
       assert {:ok, %Country{} = country} = Countries.create_country(attrs)
       assert country.code == @country_valid_attrs.code
@@ -164,14 +176,20 @@ defmodule Exercise.CountriesTest do
 
     test "update_country/2 with valid data updates the country", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
-      assert {:ok, %Country{} = country} = Countries.update_country(country, @country_update_attrs)
+
+      assert {:ok, %Country{} = country} =
+               Countries.update_country(country, @country_update_attrs)
+
       assert country.code == @country_update_attrs.code
       assert country.name == @country_update_attrs.name
     end
 
     test "update_country/2 with invalid data returns error changeset", %{currency: currency} do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
-      assert {:error, %Ecto.Changeset{}} = Countries.update_country(country, @country_invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Countries.update_country(country, @country_invalid_attrs)
+
       assert country == Countries.preload(Countries.get_country!(country.id))
     end
 
@@ -181,7 +199,9 @@ defmodule Exercise.CountriesTest do
       assert_raise Ecto.NoResultsError, fn -> Countries.get_country!(country.id) end
     end
 
-    test "delete_country/1 with associated employee should return error changeset", %{currency: currency} do
+    test "delete_country/1 with associated employee should return error changeset", %{
+      currency: currency
+    } do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
       _employee = Fixtures.employee_fixture(%{country_id: country.id})
       assert {:error, %Ecto.Changeset{}} = Countries.delete_country(country)
@@ -197,7 +217,9 @@ defmodule Exercise.CountriesTest do
                Countries.create_country(%{@country_valid_attrs | :code => "invalid code"})
     end
 
-    test "update_country/2 with non alpha-3 country.code returns error changeset", %{currency: currency} do
+    test "update_country/2 with non alpha-3 country.code returns error changeset", %{
+      currency: currency
+    } do
       country = Fixtures.country_fixture(%{currency_id: currency.id})
 
       assert {:error, %Ecto.Changeset{}} =

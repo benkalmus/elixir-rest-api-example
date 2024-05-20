@@ -122,7 +122,8 @@ defmodule ExerciseWeb.CountryControllerTest do
 
   defp create_country(ctx) do
     country = Fixtures.country_fixture(@create_attrs |> Map.put(:currency_id, ctx.currency.id))
+
     ctx
-      |> Map.put(:country, country)
+    |> Map.put(:country, country)
   end
 end

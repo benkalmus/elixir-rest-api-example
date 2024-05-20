@@ -19,11 +19,11 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   setup %{conn: conn} do
     currency = Fixtures.currency_fixture()
     country = Fixtures.country_fixture(%{currency_id: currency.id})
+
     {:ok,
-      conn: put_req_header(conn, "accept", "application/json"),
-      country: country,
-      currency: currency
-    }
+     conn: put_req_header(conn, "accept", "application/json"),
+     country: country,
+     currency: currency}
   end
 
   describe "index" do
@@ -37,15 +37,18 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       conn = get(conn, ~p"/api/employees")
       country = Exercise.Repo.preload(country, :currency)
       currency_code = country.currency.code
-      assert [%{
-        "id" => ^id,
-        "full_name" => "some full_name",
-        "job_title" => "some job_title",
-        "salary" => 42,
-        "country_id" => ^country_id,
-        "country_name" => "United States of America",
-        "currency_code" => ^currency_code
-      }] = json_response(conn, 200)["data"]
+
+      assert [
+               %{
+                 "id" => ^id,
+                 "full_name" => "some full_name",
+                 "job_title" => "some job_title",
+                 "salary" => 42,
+                 "country_id" => ^country_id,
+                 "country_name" => "United States of America",
+                 "currency_code" => ^currency_code
+               }
+             ] = json_response(conn, 200)["data"]
     end
   end
 
@@ -71,39 +74,45 @@ defmodule ExerciseWeb.EmployeeControllerTest do
     end
 
     test "renders errors when data is invalid", %{conn: conn, country: country} do
-      conn = post(conn, ~p"/api/employees", employee:  employee_attr(@invalid_attrs, country))
+      conn = post(conn, ~p"/api/employees", employee: employee_attr(@invalid_attrs, country))
       assert json_response(conn, 422)["errors"] != %{}
     end
 
     test "batch_write returns lists of successes and failures", %{conn: conn, country: country} do
       country_id = country.id
-      employee_batches =  [
+
+      employee_batches = [
         ## valid
         %{full_name: "John Smith", job_title: "Developer", country_id: country_id, salary: 50000},
         ## invalid
         %{full_name: "Jack Johnson", job_title: "Manager", country_id: -1, salary: 60000}
       ]
+
       conn = post(conn, Routes.employee_path(conn, :batch_write), employees: employee_batches)
       response = json_response(conn, 200)
-      assert [%{
-        "full_name" => "John Smith",
-        "job_title" => "Developer",
-        "salary" => 50000,
-        "country_name" => "United States of America",
-        "country_id" => ^country_id
-      }] = response["successful"]
+
+      assert [
+               %{
+                 "full_name" => "John Smith",
+                 "job_title" => "Developer",
+                 "salary" => 50000,
+                 "country_name" => "United States of America",
+                 "country_id" => ^country_id
+               }
+             ] = response["successful"]
 
       # failures should be descriptive:
-      assert [%{
-        "error" => %{"country_id" => ["does not exist"]},
-        "params" => %{
-          "full_name" => "Jack Johnson",
-          "job_title" => "Manager",
-          "salary" => 60000,
-          "country_id" => -1
-        }
-      }] = response["failed"]
-
+      assert [
+               %{
+                 "error" => %{"country_id" => ["does not exist"]},
+                 "params" => %{
+                   "full_name" => "Jack Johnson",
+                   "job_title" => "Manager",
+                   "salary" => 60000,
+                   "country_id" => -1
+                 }
+               }
+             ] = response["failed"]
     end
   end
 
@@ -112,6 +121,7 @@ defmodule ExerciseWeb.EmployeeControllerTest do
 
     test "renders employee when id is valid", %{conn: conn, employee: employee} do
       conn = get(conn, Routes.employee_path(conn, :show, employee.id))
+
       assert %{
                "id" => employee.id,
                "full_name" => employee.full_name,
@@ -133,8 +143,14 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   describe "update employee" do
     setup [:create_employee]
 
-    test "renders employee when data is valid", %{conn: conn, employee: %Employee{id: id} = employee, country: country} do
-      conn = put(conn, ~p"/api/employees/#{employee}", employee: employee_attr(@update_attrs, country))
+    test "renders employee when data is valid", %{
+      conn: conn,
+      employee: %Employee{id: id} = employee,
+      country: country
+    } do
+      conn =
+        put(conn, ~p"/api/employees/#{employee}", employee: employee_attr(@update_attrs, country))
+
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(conn, ~p"/api/employees/#{id}")
@@ -150,8 +166,16 @@ defmodule ExerciseWeb.EmployeeControllerTest do
              } == json_response(conn, 200)["data"]
     end
 
-    test "renders errors when data is invalid", %{conn: conn, employee: employee, country: country} do
-      conn = put(conn, ~p"/api/employees/#{employee}", employee: employee_attr(@invalid_attrs, country))
+    test "renders errors when data is invalid", %{
+      conn: conn,
+      employee: employee,
+      country: country
+    } do
+      conn =
+        put(conn, ~p"/api/employees/#{employee}",
+          employee: employee_attr(@invalid_attrs, country)
+        )
+
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
@@ -172,18 +196,22 @@ defmodule ExerciseWeb.EmployeeControllerTest do
   describe "employee_metrics" do
     setup [:create_employees_for_metrics]
 
-    test "employee metrics by country id returns a json response containing valid metrics", %{conn: conn, country: country} do
+    test "employee metrics by country id returns a json response containing valid metrics", %{
+      conn: conn,
+      country: country
+    } do
       min = 50000
-      max = 100000
+      max = 100_000
       mean = 70000
       code = country.currency.code
 
       conn = get(conn, Routes.employee_path(conn, :metrics_by_country, country_id: country.id))
+
       assert %{
-        "min" => ^min,
-        "max" => ^max,
-        "mean" => ^mean,
-        "currency_code" => ^code
+               "min" => ^min,
+               "max" => ^max,
+               "mean" => ^mean,
+               "currency_code" => ^code
              } = json_response(conn, 200)
     end
 
@@ -191,41 +219,60 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       conn = get(conn, Routes.employee_path(conn, :metrics_by_country, country_id: -1))
 
       assert %{
-        "errors" => %{
-          "detail" => "Not Found"
-        }
-      } = json_response(conn, 404)
+               "errors" => %{
+                 "detail" => "Not Found"
+               }
+             } = json_response(conn, 404)
     end
 
-    test "employee metrics by job_title returns a json response containing valid metrics", %{conn: conn} do
+    test "employee metrics by job_title returns a json response containing valid metrics", %{
+      conn: conn
+    } do
       target_currency = "USD"
-      employee_max = 100000   # employee with highest salary in GBP
+      # employee with highest salary in GBP
+      employee_max = 100_000
       job_title = "Manager"
       # convert one of the other employees salary to target_currency
-      {:ok, max_in_usd} = Exercise.Services.CurrencyConverter.convert("GBP", target_currency, employee_max)
+      {:ok, max_in_usd} =
+        Exercise.Services.CurrencyConverter.convert("GBP", target_currency, employee_max)
+
       max = round(max_in_usd)
       # calculate mean
-      mean = round((60000 + 100000 + max) / 3)
+      mean = round((60000 + 100_000 + max) / 3)
 
-      conn = get(conn, Routes.employee_path(conn, :metrics_by_job_title, job_title: job_title, target_currency: target_currency))
+      conn =
+        get(
+          conn,
+          Routes.employee_path(conn, :metrics_by_job_title,
+            job_title: job_title,
+            target_currency: target_currency
+          )
+        )
+
       assert %{
-        "min" => 60000,
-        "max" => ^max,
-        "mean" => ^mean,
-        "currency_code" => ^target_currency
+               "min" => 60000,
+               "max" => ^max,
+               "mean" => ^mean,
+               "currency_code" => ^target_currency
              } = json_response(conn, 200)
     end
 
     test "employee metrics by invalid job_title returns an error", %{conn: conn} do
-      conn = get(conn, Routes.employee_path(conn, :metrics_by_job_title, job_title: "job_title", target_currency: "target_currency"))
+      conn =
+        get(
+          conn,
+          Routes.employee_path(conn, :metrics_by_job_title,
+            job_title: "job_title",
+            target_currency: "target_currency"
+          )
+        )
 
       assert %{
-        "errors" => %{
-          "detail" => "Not Found"
-        }
-      } = json_response(conn, 404)
+               "errors" => %{
+                 "detail" => "Not Found"
+               }
+             } = json_response(conn, 404)
     end
-
   end
 
   defp create_employee(%{country: country}) do
@@ -239,15 +286,31 @@ defmodule ExerciseWeb.EmployeeControllerTest do
 
   defp create_employees_for_metrics(%{country: country}) do
     another_currency = Fixtures.currency_fixture(%{code: "GBP", name: "British Pound Sterling"})
-    another_country = Fixtures.country_fixture(%{currency_id: another_currency.id, code: "GBP", name: "United Kingdom"})
+
+    another_country =
+      Fixtures.country_fixture(%{
+        currency_id: another_currency.id,
+        code: "GBP",
+        name: "United Kingdom"
+      })
 
     # a mixture of employees with different countries and job titles
-    employee_batches =  [
+    employee_batches = [
       %{full_name: "John Smith", job_title: "Developer", country_id: country.id, salary: 50000},
       %{full_name: "Jack Johnson", job_title: "Manager", country_id: country.id, salary: 60000},
-      %{full_name: "John Jackson", job_title: "Manager", country_id: country.id, salary: 100000},
-      %{full_name: "Billy Jones", job_title: "Developer", country_id: another_country.id, salary: 100000},
-      %{full_name: "Adam McCoy", job_title: "Manager", country_id: another_country.id, salary: 100000}
+      %{full_name: "John Jackson", job_title: "Manager", country_id: country.id, salary: 100_000},
+      %{
+        full_name: "Billy Jones",
+        job_title: "Developer",
+        country_id: another_country.id,
+        salary: 100_000
+      },
+      %{
+        full_name: "Adam McCoy",
+        job_title: "Manager",
+        country_id: another_country.id,
+        salary: 100_000
+      }
     ]
 
     Employees.batch_write(employee_batches)
@@ -258,5 +321,4 @@ defmodule ExerciseWeb.EmployeeControllerTest do
       employees: employee_batches
     }
   end
-
 end

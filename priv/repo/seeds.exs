@@ -39,7 +39,7 @@ defmodule Exercise.Seed do
   @insert_currencies true
   @job_title_subset_num 100
   @seed {1, 2, 3}
-  #number of employees to insert in a single request to batch_write
+  # number of employees to insert in a single request to batch_write
   @batch_size 10_000
   @num_employees 10_000
 
@@ -91,12 +91,13 @@ defmodule Exercise.Seed do
   def main(args) do
     options = parse_args(args)
 
-    #set seed for reproducibility
+    # set seed for reproducibility
     :rand.seed(:exsss, @seed)
 
     case options do
       {:ok, opts} ->
         run(opts)
+
       {:error, :show_help} ->
         print_usage()
     end
@@ -104,6 +105,7 @@ defmodule Exercise.Seed do
 
   def generate_currencies(%{:countries => true}) do
     IO.puts("\nInserting currencies\n")
+
     for currency <- @currency_data do
       [name, code, symbol] = currency
 
@@ -115,15 +117,18 @@ defmodule Exercise.Seed do
         })
     end
   end
+
   def generate_currencies(_) do
     {:ok, :skipped}
   end
 
   def generate_countries(%{:countries => true}) do
     IO.puts("\nInserting countries\n")
+
     for country <- @country_data do
       [name, code, currency_code] = country
       currency = Countries.get_currency_by_code!(currency_code)
+
       country_map = %{
         name: name,
         code: code,
@@ -132,10 +137,11 @@ defmodule Exercise.Seed do
 
       IO.puts("INSERT:\n#{inspect(country_map)}\n")
       {:ok, _country} = Countries.create_country(country_map)
-
     end
+
     {:ok, :done}
   end
+
   def generate_countries(_) do
     {:ok, :skipped}
   end
@@ -148,18 +154,19 @@ defmodule Exercise.Seed do
     last_names = parse_text_file(@last_names_file)
     job_titles = parse_text_file(@job_titles_file)
 
-    #take subset of N job_titles
+    # take subset of N job_titles
     job_titles = Enum.take_random(job_titles, @job_title_subset_num)
 
-    #retrieve all country ids
+    # retrieve all country ids
     country_ids =
       Countries.list_countries()
       |> Enum.map(fn c -> c.id end)
 
     # generate N employee parameters given by opts
-    employee_records = Enum.map(1..num_employees, fn _ ->
-      generate_employee(first_names, last_names, job_titles, country_ids)
-    end)
+    employee_records =
+      Enum.map(1..num_employees, fn _ ->
+        generate_employee(first_names, last_names, job_titles, country_ids)
+      end)
 
     # print out first 5 employees
     # employee_records |> Enum.take(5) |> Enum.map(fn e ->
@@ -173,6 +180,7 @@ defmodule Exercise.Seed do
     num_inserted = length(Employees.list_employees())
     IO.puts("Inserted #{num_inserted}/#{num_employees} employees\n")
   end
+
   def generate_employees(_) do
     {:ok, :skipped}
   end
@@ -211,20 +219,20 @@ defmodule Exercise.Seed do
     }
   end
 
-  #Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000
+  # Returns a random integer in multiples of 5000, salary range is 5,000 up to 150,000
   defp gen_salary() do
-    (5 * :rand.uniform(30)) * 1_000
+    5 * :rand.uniform(30) * 1_000
   end
 
   # performs a batched write on the DB using Employee API
   defp insert_employees(employees) do
     # split employees into N batches and post them to batch_write
     employees
-      |> Enum.chunk_every(@batch_size)
-      |> Enum.each(&Employees.batch_write_unsafe/1)
+    |> Enum.chunk_every(@batch_size)
+    |> Enum.each(&Employees.batch_write_unsafe/1)
   end
 
-  #Find supported arguments, else return them with defaults. If help flag was raised, return :error to handle it
+  # Find supported arguments, else return them with defaults. If help flag was raised, return :error to handle it
   defp parse_args(args) do
     options = [
       number: :integer,
@@ -233,6 +241,7 @@ defmodule Exercise.Seed do
       currencies: :boolean,
       help: :boolean
     ]
+
     defaults = %{
       number: @num_employees,
       employees: @insert_employees,
@@ -240,8 +249,13 @@ defmodule Exercise.Seed do
       currencies: @insert_currencies
     }
 
-    {opts, _, _} = OptionParser.parse(args, switches: options, aliases: [h: :help, n: :number, e: :employees, c: :countries, o: :currencies])
-    #merge and override defaults
+    {opts, _, _} =
+      OptionParser.parse(args,
+        switches: options,
+        aliases: [h: :help, n: :number, e: :employees, c: :countries, o: :currencies]
+      )
+
+    # merge and override defaults
     opts = Enum.into(opts, defaults)
 
     case opts[:help] do
@@ -251,7 +265,7 @@ defmodule Exercise.Seed do
   end
 
   defp print_usage() do
-    IO.puts """
+    IO.puts("""
     Usage:
       seed.exs -n 100 -c=false [options]
 
@@ -261,10 +275,9 @@ defmodule Exercise.Seed do
       -c, --countries   BOOL    If true, countries will be inserted (default: #{@insert_countries})
       -o, --currencies  BOOL    If true, currencies will be inserted (default: #{@insert_currencies})
       -h, --help                Print this help information
-    """
+    """)
   end
-
 end
 
-#Execute script with options passed into the script
+# Execute script with options passed into the script
 Exercise.Seed.main(System.argv())

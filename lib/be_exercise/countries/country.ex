@@ -25,6 +25,7 @@ defmodule Exercise.Countries.Country do
   def delete_changeset(country) do
     country
     |> change()
-    |> no_assoc_constraint(:employee, message: "country is associated with at least one employee")  # Ensures that countries can only be deleted if not associated with any records
+    # Ensures that countries can only be deleted if not associated with any records
+    |> no_assoc_constraint(:employee, message: "country is associated with at least one employee")
   end
 end

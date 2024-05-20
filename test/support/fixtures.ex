@@ -19,7 +19,7 @@ defmodule Exercise.Fixtures do
         code: "USD",
         name: "some currency",
         symbol: "$"
-        })
+      })
       |> Countries.create_currency()
 
     currency
@@ -35,8 +35,8 @@ defmodule Exercise.Fixtures do
       attrs
       |> Enum.into(%{
         code: "USA",
-        name: "United States of America",
-        })
+        name: "United States of America"
+      })
       |> Countries.create_country()
 
     Countries.preload(country)
@@ -53,10 +53,9 @@ defmodule Exercise.Fixtures do
         full_name: "John Smith",
         job_title: "Software Engineer",
         salary: 50000
-        })
+      })
       |> Employees.create_employee()
 
     Employees.preload(employee)
   end
-
 end

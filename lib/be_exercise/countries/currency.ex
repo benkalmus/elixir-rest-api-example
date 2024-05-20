@@ -29,6 +29,7 @@ defmodule Exercise.Countries.Currency do
   def delete_changeset(currency) do
     currency
     |> change()
-    |> no_assoc_constraint(:country, message: "currency is associated with a country")  # Ensures that currency can only be delete if it is not associated with any country
+    # Ensures that currency can only be delete if it is not associated with any country
+    |> no_assoc_constraint(:country, message: "currency is associated with a country")
   end
 end

@@ -5,7 +5,6 @@ defmodule Exercise.Services.SimpleCacheTest do
   alias Exercise.Services.{SimpleCache, SimpleCacheSup}
 
   describe "testing employee metrics cache functionality" do
-
     test "test employee_metrics cache insert and get" do
       key = "country"
       value = "some work done for country"
@@ -21,10 +20,10 @@ defmodule Exercise.Services.SimpleCacheTest do
 
       SimpleCache.insert(cache_name(), key, value, 1)
       Process.sleep(5)
-      Process.send(cache_name(), :expire, [])    # cache processes are named
+      # cache processes are named
+      Process.send(cache_name(), :expire, [])
       Process.sleep(5)
       assert {:error, :not_found} = SimpleCache.get(cache_name(), key)
-
     end
 
     test "test employee_metrics cache manual expiration" do
@@ -34,7 +33,6 @@ defmodule Exercise.Services.SimpleCacheTest do
       SimpleCache.insert(cache_name(), key, value, 1000)
       SimpleCache.expire(cache_name(), key)
       assert {:error, :not_found} = SimpleCache.get(cache_name(), key)
-
     end
 
     # returns the cache name
@@ -42,5 +40,4 @@ defmodule Exercise.Services.SimpleCacheTest do
       SimpleCacheSup.employee_metrics_cache()
     end
   end
-
 end

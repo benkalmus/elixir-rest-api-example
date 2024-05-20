@@ -234,7 +234,9 @@ defmodule Exercise.Countries do
   def preload(%Country{} = country) do
     Repo.preload(country, :currency)
   end
-  def preload(%Currency{} = currency) do # currency doesn't have associations currently
+
+  # currency doesn't have associations currently
+  def preload(%Currency{} = currency) do
     currency
   end
 end

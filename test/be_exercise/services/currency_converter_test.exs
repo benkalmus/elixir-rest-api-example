@@ -60,7 +60,6 @@ defmodule Exercise.Services.CurrencyConverterTest do
           assert {:ok, _} = Converter.convert(currency, target_currency, amount)
         end
       end
-
     end
   end
 end

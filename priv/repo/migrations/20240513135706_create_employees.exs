@@ -5,7 +5,7 @@ defmodule Exercise.Repo.Migrations.CreateEmployees do
     create table(:employees) do
       add :full_name, :string
       add :job_title, :string
-      add :salary,    :bigint
+      add :salary, :bigint
       add :country_id, references(:countries, on_delete: :restrict)
 
       timestamps()
