@@ -44,7 +44,8 @@ defmodule Exercise.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.6"},
-      {:ecto_psql_extras, "~> 0.2"}
+      {:ecto_psql_extras, "~> 0.2"},
+      {:benchee, "~> 1.3.0", only: :dev}
     ]
   end
 
@@ -57,7 +58,7 @@ defmodule Exercise.MixProject do
   defp aliases do
     [
       setup: ["deps.get", "ecto.setup"],
-      seed: ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs -n 100000"],
+      seed: ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs -n 10000"],
       reset: ["ecto.drop", "seed"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]

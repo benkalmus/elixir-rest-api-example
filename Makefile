@@ -1,11 +1,8 @@
 include vsn.mk
 
-.PHONY: server shell help db-setup db-seed db-reset db-drop test test-one db-up db-down docker-stop version
+.PHONY: server shell deps help db-setup db-seed db-reset db-drop test test-one db-up db-down docker-stop version
 
 PROJECT_NAME="be_exercise"
-
-# TODO commands:
-# benchmark
 
 # ==============================
 # App
@@ -17,6 +14,10 @@ server: db-up
 # Run phoenix app with REPL shell
 shell: db-up
 	iex -S mix 
+
+# Fetches deps defined in mix.exs
+deps:
+	mix deps.get
 
 help: 
 	@echo "Commands:"
@@ -64,6 +65,16 @@ test: docker-stop
 # runs mix test but exits on first error, so we can only see one test failure at a time.
 test-one: 
 	$(MAKE) MAKE_TEST_OPTS="--max-failures 1" test 
+
+
+# ==============================
+# Benchmarking
+
+bench: db-up 
+	mix ecto.drop
+	mix seed
+	mix run priv/bench/benchmark.exs || true
+	$(MAKE) docker-stop
 
 # ==============================
 # Docker Containers

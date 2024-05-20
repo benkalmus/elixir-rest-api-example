@@ -97,6 +97,20 @@ defmodule Exercise.Employees do
   end
 
   @doc """
+  Deletes all employee records from the database.
+  Note: This action is permanent!
+
+  ## Examples
+
+      iex> delete_employee(employee)
+      :ok
+  """
+  def drop_employees() do
+    Repo.delete_all(Employee)
+  end
+
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking employee changes.
 
   ## Examples
@@ -202,16 +216,19 @@ defmodule Exercise.Employees do
 
   @doc """
     Returns salary metrics for a given country id, in the currency code of the country given.
-    Salary metrics include: min, max, mean average. All values are returned as integers
+    Salary metrics include: min, max, mean average. All values are returned as integers and rounded up.
 
     ## Examples
     iex> salary_metrics_by_country(1)
-    {:ok, %{
-      min: 10000,
-      max: 20000,
-      mean: 15000,
-      currency_code: "USD"
-    }}
+      {:ok, %{
+        min: 10000,
+        max: 20000,
+        mean: 15000,
+        currency_code: "USD"
+      }}
+
+    iex> salary_metrics_by_country(-1)
+      {:error, :not_found}}
   """
   @spec salary_metrics_by_country(integer()) ::
     {:ok, %{
@@ -236,15 +253,20 @@ defmodule Exercise.Employees do
   end
 
   @doc"""
-  @spec salary_metrics_by_country(integer()) ::
-    {:ok, %{
-      min: integer(),
-      max: integer(),
-      mean: integer(),
-      currency_code: String.t()
-    }} |
-    {:error, :not_found} |
-    {:error, :metrics_query_failed}
+    Returns salary metrics for a given country id, in the currency code of the country given.
+    Salary metrics include: min, max, mean and average. All values are returned as integers and are rounded up.
+    If no values were returned for the given country, the function returns an error tuple {:error, :not_found}.
+
+    ## Examples
+    iex> salary_metrics_by_country(1)
+      {:ok, %{
+        min: 10000,
+        max: 20000,
+        mean: 15000,
+        currency_code: "USD"
+
+    iex> salary_metrics_by_country(-1)
+      {:error, :not_found}}
   """
   @spec salary_metrics_by_country_internal(integer()) ::
   {:ok, %{
@@ -274,21 +296,24 @@ defmodule Exercise.Employees do
 
     ## Examples
     iex> salary_metrics_by_job_title("Developer")
-    {:ok, %{
-      min: 10000,
-      max: 20000,
-      mean: 15000,
-      currency_code: "USD"
-    }}
+      {:ok, %{
+        min: 10000,
+        max: 20000,
+        mean: 15000,
+        currency_code: "USD"
+      }}
+
+    iex> salary_metrics_by_job_title("not found")
+      {:error, :not_found}}
   """
   @spec salary_metrics_by_job_title(String.t()) ::
-  {:ok, %{
-    min: integer(),
-    max: integer(),
-    mean: integer(),
-    currency_code: String.t()
-  }} |
-  {:error, :not_found}
+    {:ok, %{
+      min: integer(),
+      max: integer(),
+      mean: integer(),
+      currency_code: String.t()
+    }} |
+    {:error, :not_found}
   def salary_metrics_by_job_title(job_title, target_currency \\ "USD") do
     query =
       from e in Employee,
