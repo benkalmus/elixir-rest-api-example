@@ -349,6 +349,20 @@ defmodule Exercise.Employees do
     end
   end
 
+  @doc """
+    Cached version of handle_salary_metrics_by_country/1.
+    Attempts to retrieve a cached result, if not found, queries the DB, stores a new cache and returns the result.
+  """
+  def salary_metrics_by_job_title_cached(job_title, target_currency \\ "USD") do
+    case SimpleCache.get(SimpleCacheSup.employee_metrics_cache(), {job_title, target_currency}) do
+      {:ok, result} ->
+        {:ok, result}
+      {:error, _} ->
+        result = salary_metrics_by_job_title(job_title, target_currency)
+        SimpleCache.insert(SimpleCacheSup.employee_metrics_cache(), {job_title, target_currency}, result, @default_ttl_ms)
+        result
+    end
+  end
   ## ================================================================================
   ## Internal functions
 

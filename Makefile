@@ -1,6 +1,6 @@
 include vsn.mk
 
-.PHONY: server shell deps help db-setup db-seed db-reset db-drop test test-one db-up db-down docker-stop version
+.PHONY: server shell deps help db-setup db-seed db-reset db-drop test test-one bench db-up db-down docker-stop version
 
 PROJECT_NAME="be_exercise"
 
@@ -15,13 +15,14 @@ server: db-up
 shell: db-up
 	iex -S mix 
 
-# Fetches deps defined in mix.exs
+# Fetches deps defined in mix.exs and compiles source
 deps:
 	mix deps.get
+	mix compile
 
 help: 
 	@echo "Commands:"
-	@echo "server, shell, db-setup, db-seed, db-reset, db-drop, test, test-one, version"
+	@echo "server, shell, deps, db-setup, db-seed, db-reset, db-drop, test, test-one, bench, version"
 
 # ==============================
 # DB
@@ -70,10 +71,17 @@ test-one:
 # ==============================
 # Benchmarking
 
+# Starts up a DEV instance of the database for benchmarking, 
+# NOTE, this will drop all existing data in the DB and recreate it with the seed script!
 bench: db-up 
-	mix ecto.drop
-	mix seed
-	mix run priv/bench/benchmark.exs || true
+	@read -p "All DB records will be dropped for benchmarking. Are you sure you want to continue? [y/n]" response;\
+	if [ "$$response" = "y" ]; then\
+		mix ecto.drop;\
+		mix ecto.create;\
+		mix ecto.migrate;\
+		mix seed;\
+		mix run priv/bench/benchmark.exs;\
+	fi
 	$(MAKE) docker-stop
 
 # ==============================

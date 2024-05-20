@@ -49,13 +49,13 @@ defmodule ExerciseWeb.EmployeeController do
   end
 
   def metrics_by_country(conn, %{"country_id" => country_id}) do
-    with {:ok, metrics} <- Employees.salary_metrics_by_country(country_id) do
+    with {:ok, metrics} <- Employees.salary_metrics_by_country_cached(country_id) do
       render(conn, :display_metrics, metrics)
     end
   end
 
   def metrics_by_job_title(conn, %{"job_title" => job_title, "target_currency" => target_currency}) do
-    with {:ok, metrics} <- Employees.salary_metrics_by_job_title(job_title, target_currency) do
+    with {:ok, metrics} <- Employees.salary_metrics_by_job_title_cached(job_title, target_currency) do
       render(conn, :display_metrics, metrics)
     end
   end

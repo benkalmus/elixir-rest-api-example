@@ -1,6 +1,8 @@
 # Documentation
 
-For posterity, the following diagram displays a basic overview of the be-exercise app below.
+## Original implementation
+
+For posterity, the following diagram displays a basic overview of the be-exercise app in its initial stage.
 
 ![image](diagrams/svg/be-code-exercise-initial.svg)
 
@@ -8,48 +10,150 @@ The application exposes simple CRUD API for `Currency` and `Country` tables in a
 It follows the architecture of a standard, generated phoenix project. 
 `Currencies` and `Countries` are related via a one-to-many relationship. 
 
-## Reqs
+## Requirements
 - [x] Fix existing bugs in the application
 - [x] Create an employee resource
 - [x] Seed script
 - [x] Salary metrics endpoint
 
-## Implementation Details
 
-Firstly, the inital implementation of the BE-Exercise app had a few bugs which had to be addressed.  
+# Usage
 
--- add version to json API 
+As this application grows in complexity, I decided it's suitable to compose frequently run mix tasks into a Makefile where one can easily startup, teardown, cleanup and perform many other operations by running single make commands. It's strongly recommended to take a quick glance at the Makefile to see what each command does. 
+You can list all available commands by running:
 
-## What was done 
-Organised the project with the use of Makefile, Changefile and added versioning. Secondly, as the app grew I organised the structure to separate various domains such as documentation, docker compose files and DB storage.
+> `make help`
 
-I started by adding better test coverage to countries and currencies tests. This helped me identify several bugs in the application. 
-- fixed the Country-Currency table relationship
-- added validation constraints 
+## Building 
+
+To fetch all deps and compile source, run:
+> `make deps`
+
+## Running 
+
+First, set up the database with
+
+> `make db-setup`
+
+The above will automatically run a PostgreSQL DB instance in a docker container, create the exercise DB, run migrations and start up the DB for the following commands. 
+
+
+To run Exercise app in a development environment
+> `make server`
+
+To run Exercise app with an Elixir REPL shell
+> `make shell`
+
+## Database
+
+At this stage, the DB will not have any data. You may chose to populate the database with the seed script located in [priv/repo/seeds.exs](/priv/repo/seeds.exs):
+
+> `make db-seed`
+
+If you wish to start fresh, drop everything in the database with:
+
+> `make db-drop`
+
+
+## Testing
+
+To run all tests
+> `make test`
+
+If multiple failures are causing tests difficult to read, run:
+
+> `make test-one`
+
+to see just the first failure. 
+
+## Benchmarking 
+
+Benchmark script is located in [priv/bench/benchmark.exs](/priv/bench/benchmark.exs).
+You can run it along with all DB prereqs with:
+
+> `make bench`
+
+
+# Implementation Details
+
+The BE-Exercise application provides a CRUD interface to its three main resources: Currencies, Countries and Employees. 
+
+The Application diagram below illustrates the Model-View-Controller pattern of this application, as well as Table relationships. 
+
+![Implementation](/docs/diagrams/svg/be-code-exercise-final.svg)
+
+In addition to the CRUD API, the task required addition of Metrics endpoints which calculates min, max and average salaries for all the Employees stored in the database based on their country and job title.
+
+## Json API
+
+Generated using `mix phx.routes`:
+
+```sh
+# Currencies
+currency_path  GET     /api/currencies                      ExerciseWeb.CurrencyController :index
+currency_path  GET     /api/currencies/:id/edit             ExerciseWeb.CurrencyController :edit
+currency_path  GET     /api/currencies/new                  ExerciseWeb.CurrencyController :new
+currency_path  GET     /api/currencies/:id                  ExerciseWeb.CurrencyController :show
+currency_path  POST    /api/currencies                      ExerciseWeb.CurrencyController :create
+currency_path  PATCH   /api/currencies/:id                  ExerciseWeb.CurrencyController :update
+               PUT     /api/currencies/:id                  ExerciseWeb.CurrencyController :update
+currency_path  DELETE  /api/currencies/:id                  ExerciseWeb.CurrencyController :delete
+
+currency_path  GET     /api/currencies/code/:code           ExerciseWeb.CurrencyController :get_by_code
+# Countries
+country_path  GET     /api/countries                       ExerciseWeb.CountryController :index
+country_path  GET     /api/countries/:id/edit              ExerciseWeb.CountryController :edit
+country_path  GET     /api/countries/new                   ExerciseWeb.CountryController :new
+country_path  GET     /api/countries/:id                   ExerciseWeb.CountryController :show
+country_path  POST    /api/countries                       ExerciseWeb.CountryController :create
+country_path  PATCH   /api/countries/:id                   ExerciseWeb.CountryController :update
+              PUT     /api/countries/:id                   ExerciseWeb.CountryController :update
+country_path  DELETE  /api/countries/:id                   ExerciseWeb.CountryController :delete
+# Employees
+employee_path  GET     /api/employees                       ExerciseWeb.EmployeeController :index
+employee_path  GET     /api/employees/:id/edit              ExerciseWeb.EmployeeController :edit
+employee_path  GET     /api/employees/new                   ExerciseWeb.EmployeeController :new
+employee_path  GET     /api/employees/:id                   ExerciseWeb.EmployeeController :show
+employee_path  POST    /api/employees                       ExerciseWeb.EmployeeController :create
+employee_path  PATCH   /api/employees/:id                   ExerciseWeb.EmployeeController :update
+               PUT     /api/employees/:id                   ExerciseWeb.EmployeeController :update
+employee_path  DELETE  /api/employees/:id                   ExerciseWeb.EmployeeController :delete
+
+# Batch writing 
+employee_path  POST    /api/employees/batch_write           ExerciseWeb.EmployeeController :batch_write
+
+# Metrics endpoints
+employee_path  GET     /api/employees/metrics_by_country    ExerciseWeb.EmployeeController :metrics_by_country
+employee_path  GET     /api/employees/metrics_by_job_title  ExerciseWeb.EmployeeController :metrics_by_job_title
+```
+
+
+## Work 
+- Organised the project with the use of Makefile, Changefile and added versioning. Secondly, as the app grew I organised the structure to separate various domains such as documentation, docker compose files and DB storage.
+
+- Improved test coverage for countries and currencies. This helped me identify several bugs in the application. 
+- Added validation constraints 
   - unique foreign key
   - delete changeset, made a decision about handling orphaned rows 
-
-- Json API
-  - get_currency_by_code 
-  - employees resource 
-  - metrics resource 
 
 - Seed script 
 
 
-## Flaws in final implementation
+# Further work to complete this application and Production-ready
 
-### Storing Salary (money) as integer
-- should at least create a wrapper that scales by some factor, e.g 100, 
-- should use Decimal or Money type. This was initially implemented in DecimalUtils module. 
-- increases complexity of the app, namely the currency conversion service. 
-  - I decided that for the purpose of this exercise, it's not a necessary requirement, 
-  however in a production environment I wouldn't deploy an app that handles money using float types (due to loss of precision)
+Due to running short on my self-imposed time constraint (and clashes with personal-life) I have added the following feature/work that I would consider for a feature-complete app. Please understand that this is by no means a complete list.
 
-- someone can create a currency that's not supported by conversion service. 
+## Storing Salary (money)
+- Currently using integer: should at least create a wrapper that scales by some factor, e.g 100,
+- But realistically, should use Decimal or Money type (elixir deps). This was initially implemented in DecimalUtils module. 
+- increases complexity of the app, and requires changing the currency conversion service. 
+  - I decided that for the purpose of this exercise, it's not necessary to the scope 
+  - However in a production environment, one should not deploy an app that handles money using float or any types resulting in loss of precision
+
+- someone can create a currency in the DB that's not supported by the conversion service. 
 
 
-### TODOs
+### TODO Tracking
 
 - [x] Organise repo directory structure:
   - add `priv/docker` dir for storing docker compose files used to launch databses
@@ -62,6 +166,9 @@ I started by adding better test coverage to countries and currencies tests. This
 - [x] Makefile for easy startup and teardown of containers, tests and app
 
 - [] Environment file: move credentials out of configs and into .env files
+
+- [] Add versioning to json API
+  - a simple "version" header to track changes
 
 - [x] Schemas
   - inspect Country - Currency relationship schema
@@ -81,15 +188,20 @@ I started by adding better test coverage to countries and currencies tests. This
     - converted to Decimal type
     -  switched back to using an integer for salary, due to growing complexity of the application, currently outside the scope 
 
+- Add ease of use API to fetch records via fields such as `name` and `code`. 
+  - An example of this already exists in `get_currency_by_code!/1`
 
 - [x] Add logic to seed 10,000 employees into the DB. The key will be to make it fast
   - [x] Separate seeding functionality for maintainability of seeds.exs
   - [x] Concurrent batch_write. Speeds up bullk insert of records
 
 - [] **Logging**  application logging 
+  - Logging is currently bare bones
 
-- [] **Testing**
-  - [] expand current solution test coverage
+- [] **Application** monitoring in production
+
+- [x] **Testing**
+  - [x] expand current solution test coverage
     - [x] Currency
     - [x] Country
       - [] preload currency
@@ -100,37 +212,35 @@ I started by adding better test coverage to countries and currencies tests. This
       - [x] preload
         - update view to show currency in which the salary is paid!
       - [x] query
-  - [] 
+  - improve error handling and test coverage
 
 - [x] **Metrics** endpoints
   - [x] fetch salary stats given country (min, max, mean)
   - [x] fetch salary stats given job title (mean)
 
-- [] Complete all TODOs
+- [x] **Simple cache**
+  - [x] add a simple cache service wrapper around metrics controller 
 
-- [] **Benchmarking**. 
+- [x] **Benchmarking**. 
   - [] How does it scale under increasing vars such as Num Records in DB, concurrent connections...
-  - [] inserts
+  - [x] inserts
   - [] reads
   - [] fetch stats endpoint
 
-- [] **Load** testing using (hey)[https://github.com/rakyll/hey]
+- [] **Load** testing using (hey)[https://github.com/rakyll/hey] or apache benchmark http tool
 
-- [] **Documentation**. Ensure @spec and doc comments are provided on all API (with examples where relevant)
+- [] **Profiling** with fprof 
+
+- [x] **Documentation**. Ensure @spec and doc comments are provided on all API (with examples where relevant)
   - [x] Generate initial app diagram
   - [] Diagrams: generate sequence diagrams for API
     - [] Supervision tree and module hierarchy
     - [] DB Model
-    - []
-  - [] Document API. Usage and possible returns
-  - [] seed.exs script usage
+  - [x] Document API. Usage and possible returns
+  - [x] seed.exs script usage
     - added help command and module doc
 
 ## Exploring optimizations and Design decisions
-
-- Some functions raise exceptions while others do not, such as get_currency! and create_currency(). 
-  - refactor API so that functions use one or the other. Raising exceptions stacktrace overhead
-    - exceptions in get! is idiomatic elixir. 
 
 - [x] **Resolving deletes** on rows with foreign key references, such as deleting a Currency with a Country reference. 
   Options:
@@ -202,7 +312,6 @@ I started by adding better test coverage to countries and currencies tests. This
   - Reasons to make a distributed application:
     - Future metrics endpoints might be work heavy
       - metrics work can be load balanced and distributed among nodes, then results stored in a shared cache. 
-    - 
   - Reasons not to:
     - simple CRUD API, an interface to DB won't benefit from multiple nodes. Read and write limited by DB
     - increased complexity
@@ -214,11 +323,6 @@ I started by adding better test coverage to countries and currencies tests. This
   - Distributed key-value store as cache instead of ETS (local only)
   - third party service such as redis, varnish
 
-- Cache layer for reads
+- Cache layer for reads such as Varnish Cache
 
 - CQRS pattern: separate read and write operations
-
-- Numeric country and currency codes? 
-
-- Add ease of use API to fetch records via fields such as `name` and `code`. 
-  - An example of this already exists in `get_currency_by_code!/1`
