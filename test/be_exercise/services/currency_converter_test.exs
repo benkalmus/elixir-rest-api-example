@@ -46,7 +46,21 @@ defmodule Exercise.Services.CurrencyConverterTest do
 
     test "return error on negative amount" do
       amount = -10.0
+
       assert {:error, :negative_amount_given} = Converter.convert("GBP", "JPY", amount)
+    end
+
+    test "convert/3 should work for all supported currencies" do
+      amount = 100.0
+
+      currencies = Converter.supported_currency_codes()
+
+      for currency <- currencies do
+        for target_currency <- currencies do
+          assert {:ok, _} = Converter.convert(currency, target_currency, amount)
+        end
+      end
+
     end
   end
 end

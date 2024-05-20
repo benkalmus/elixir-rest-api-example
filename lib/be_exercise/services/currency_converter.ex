@@ -18,13 +18,13 @@ defmodule Exercise.Services.CurrencyConverter do
   @spec convert(currency(), currency(), number()) ::
           {:ok, float()}
           | {:error, :unsupported_currency | :negative_amount_given}
-  def convert(same, same, amount) when amount > 0 do
+  def convert(same, same, amount) when amount > 0 do    # return amount if converting to same currency
     {:ok, amount}
   end
   def convert(from, to, amount) when amount > 0 do
     convert_func(from, to, amount)
   end
-  def convert(_from, _to, amount) when amount == 0 do
+  def convert(_from, _to, amount) when amount == 0 do   # converting by 0 will return 0
     {:ok, 0.0}
   end
   def convert(_from, _to, amount) when amount < 0 do
