@@ -524,28 +524,24 @@ defmodule Exercise.Employees do
     {:error, :not_found}
   end
 
-  defp handle_job_title_metrics([head | tail] = query_results, target_currency) do
+  defp handle_job_title_metrics(query_results, target_currency) do
+    # perform salary conversions on query results.
+    # if conversion fails, disregard employee from calculations
+    [head | tail] = valid_salaries =
+      Enum.reduce(query_results, [], fn result, acc ->
+        case CurrencyConverter.convert(result.currency, target_currency, result.employee.salary) do
+          {:ok, salary_converted} -> [ %{salary: salary_converted} | acc]
+          #ignore failed salaries
+          _ -> acc
+        end
+      end)
+
     {min, max, sum} =
       tail
       # use first elem as intial Enum acc values
-      # TODO this reduce function is used twice, refactor generic
-      |> Enum.reduce(
-        {head.employee.salary, head.employee.salary, head.employee.salary},
-        fn map, {min, max, sum} ->
-          salary = map.employee.salary
-          currency = map.currency
-          {:ok, salary_converted} = CurrencyConverter.convert(currency, target_currency, salary)
+      |> Enum.reduce({head.salary, head.salary, head.salary}, &reduce_results_to_metrics_func/2)
 
-          {
-            # if left hand side = `true`, returns min/max. If left hand side = `false`, return || salary_converted
-            (min < salary_converted && min) || salary_converted,
-            (max > salary_converted && max) || salary_converted,
-            sum + salary_converted
-          }
-        end
-      )
-
-    mean = sum / Enum.count(query_results)
+    mean = sum / Enum.count(valid_salaries)
 
     {:ok,
      %{
