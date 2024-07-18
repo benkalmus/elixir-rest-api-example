@@ -4,7 +4,7 @@
 
 For posterity, the following diagram displays a basic overview of the be-exercise app in its initial stage.
 
-![image](diagrams/svg/be-code-exercise-initial.svg)
+![image](/docs/diagrams/svg/be-code-exercise-initial.svg)
 
 The application exposes simple CRUD API for `Currency` and `Country` tables in a PostgreSQL Database. 
 It follows the architecture of a standard, generated phoenix project. 
