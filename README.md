@@ -10,9 +10,8 @@ The application exposes simple CRUD API for `Currency` and `Country` tables in a
 It follows the architecture of a standard, generated phoenix project. 
 `Currencies` and `Countries` are related via a one-to-many relationship. 
 
-## Requirements
-- [x] Fix existing bugs in the application
-- [x] Create an employee resource
+## Features
+- [x] Add an employee resource, linked to a single Country
 - [x] Seed script
 - [x] Salary metrics endpoint
 
