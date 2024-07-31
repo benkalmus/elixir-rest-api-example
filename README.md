@@ -2,7 +2,7 @@
 
 ## Original implementation
 
-For posterity, the following diagram displays a basic overview of the be-exercise app in its initial stage.
+The following diagram displays a basic overview of the app in its initial stages.
 
 ![image](/docs/diagrams/svg/be-code-exercise-initial.svg)
 
@@ -86,7 +86,7 @@ You can run it along with all DB prereqs with:
 
 # Implementation Details
 
-The BE-Exercise application provides a CRUD interface to its three main resources: Currencies, Countries and Employees. 
+The Elixir application provides a CRUD interface to its three main resources: Currencies, Countries and Employees. 
 
 The Application diagram below illustrates the Model-View-Controller pattern of this application, as well as Table relationships. 
 
@@ -150,8 +150,6 @@ employee_path  GET     /api/employees/metrics_by_job_title  ExerciseWeb.Employee
 
 
 # Further work to complete this application and Production-ready
-
-Due to running short on my self-imposed time constraint (and clashes with personal-life) I have added the following feature/work that I would consider for a feature-complete app. Please understand that this is by no means a complete list.
 
 ## Storing Salary (money)
 - Currently using integer: should at least create a wrapper that scales by some factor, e.g 100,
